@@ -32,12 +32,16 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
   mIsDoseAverageDEDX=false;
   mIsDoseAverageEdepDX=false;
   mIsAverageKinEnergy=false;
-
+  mIsAlpha = false;
+  mIsAlphaLinear=false;
+  mIsAlphaLinearOverkillSaturation=false;
+  mIsAlphaLinearOverkillReverse=false;
   mIsLETtoWaterEnabled = false;
   mIsParallelCalculationEnabled = false;
   mAveragingType = "DoseAverage";
   pMessenger = new GateLETActorMessenger(this);
   GateDebugMessageDec("Actor",4,"GateLETActor() -- end\n");
+
   emcalc = new G4EmCalculator;
 }
 //-----------------------------------------------------------------------------
@@ -74,6 +78,10 @@ void GateLETActor::Construct() {
   else if (mAveragingType == "TrackAveraged" || mAveragingType == "TrackAverage" || mAveragingType == "Track" || mAveragingType == "track" || mAveragingType == "TrackAveragedDXAveraged"){mIsTrackAverageDEDX = true;}
   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
+  else if (mAveragingType == "alphaLinear"){mIsAlphaLinear =true; mIsAlpha = true;}
+  else if (mAveragingType == "alphaLinearOverkillSaturation"){mIsAlphaLinearOverkillSaturation =true; mIsAlpha = true;}
+  else if (mAveragingType == "alphaLinearOverkillReverse"){mIsAlphaLinearOverkillReverse =true; mIsAlpha = true;}
+   
   else {GateError("The LET averaging Type" << GetObjectName()
                   << " is not valid ...\n Please select 'DoseAveraged' or 'TrackAveraged')");}
 
@@ -86,6 +94,10 @@ void GateLETActor::Construct() {
   else if (mIsTrackAverageDEDX)
     {
       mLETFilename= removeExtension(mSaveFilename) + "-trackAveraged."+ getExtension(mSaveFilename);
+    }
+  else if (mIsAlpha)
+    {
+      mLETFilename= removeExtension(mSaveFilename) + "-alpha."+ getExtension(mSaveFilename);
     }
   if (mIsLETtoWaterEnabled){
     mLETFilename= removeExtension(mLETFilename) + "-letToWater."+ getExtension(mLETFilename);
@@ -222,6 +234,10 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
   double weightedLET =0;
   G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
 
+  if (dedx==0){
+    GateDebugMessage("Actor", 5, "GateLETActor dedx == 0 : do nothing\n");
+    return;
+  }
 
   double normalizationVal = 0;
   if (mIsDoseAverageDEDX) {
@@ -243,6 +259,26 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
   else if (mIsAverageKinEnergy) {
     weightedLET=steplength*energy*weight;
     normalizationVal = steplength;
+  }
+  else if (mIsAlpha) {
+        
+   double alpha_0 =0.112;
+  double lambda_wilkensModel = 0.02;
+    G4double dedx_star = dedx;
+    if (dedx > 30){
+        if (mIsAlphaLinearOverkillSaturation){
+            dedx_star = 30;
+        }
+        else if (mIsAlphaLinearOverkillReverse){
+            dedx_star = 60 - dedx;
+            if (dedx_star <= 0){
+                dedx_star = 1;
+            }
+        }
+    }
+    G4double alpha_i = alpha_0 +  lambda_wilkensModel*dedx_star;
+    weightedLET=edep*alpha_i;
+    normalizationVal =edep ;
   }
 
   if (mIsLETtoWaterEnabled){

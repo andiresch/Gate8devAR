@@ -7,31 +7,30 @@ See GATE/LICENSE.txt for further details
 ----------------------*/
 
 /*
-  \class  GateDoseActorMessenger
-  \author thibault.frisson@creatis.insa-lyon.fr
-          laurent.guigues@creatis.insa-lyon.fr
-          david.sarrut@creatis.insa-lyon.fr
+  \class  GateCylindircalEdepActorMessenger
+  * based on GateDoseActorMessenger
+  \author A.Resch
 */
 
-#ifndef GATEDOSEACTORMESSENGER_HH
-#define GATEDOSEACTORMESSENGER_HH
+#ifndef GATECYLINDRICALEDEPACTORMESSENGER_HH
+#define GATECYLINDRICALEDEPACTORMESSENGER_HH
 
 #include "G4UIcmdWithABool.hh"
 #include "G4UIcmdWithAString.hh"
 #include "GateImageActorMessenger.hh"
 
-class GateDoseActor;
-class GateDoseActorMessenger : public GateImageActorMessenger
+class GateCylindricalEdepActor;
+class GateCylindricalEdepActorMessenger : public GateImageActorMessenger
 {
 public:
-  GateDoseActorMessenger(GateDoseActor* sensor);
-  virtual ~GateDoseActorMessenger();
+  GateCylindricalEdepActorMessenger(GateCylindricalEdepActor* sensor);
+  virtual ~GateCylindricalEdepActorMessenger();
 
   void BuildCommands(G4String base);
   void SetNewValue(G4UIcommand*, G4String);
 
 protected:
-  GateDoseActor * pDoseActor;
+  GateCylindricalEdepActor * pDoseActor;
 
   G4UIcmdWithABool * pEnableDoseCmd;
   G4UIcmdWithABool * pEnableDoseSquaredCmd;
@@ -40,7 +39,6 @@ protected:
   G4UIcmdWithABool * pEnableDoseToWaterSquaredCmd;
   G4UIcmdWithABool * pEnableDoseToWaterUncertaintyCmd;
   G4UIcmdWithABool * pEnableEdepCmd;
-  G4UIcmdWithABool * pEnableEdepToWaterCmd;
   G4UIcmdWithABool * pEnableEdepSquaredCmd;
   G4UIcmdWithABool * pEnableEdepUncertaintyCmd;
   G4UIcmdWithABool * pEnableNumberOfHitsCmd;
@@ -50,9 +48,6 @@ protected:
   G4UIcmdWithAString * pSetDoseAlgorithmCmd;
   G4UIcmdWithAString * pImportMassImageCmd;
   G4UIcmdWithAString * pExportMassImageCmd;
-
-  G4UIcmdWithAString * pVolumeFilterCmd;
-  G4UIcmdWithAString * pMaterialFilterCmd;
 };
 
-#endif /* end #define GATEDOSEACTORMESSENGER_HH*/
+#endif /* end #define GateCylindricalEdepActorMESSENGER_HH*/

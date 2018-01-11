@@ -89,9 +89,12 @@ protected:
   bool mIsDoseAverageEdepDX;
   
   bool mIsAverageKinEnergy;
-
-
+  bool  mIsAlphaLinear;
+  bool mIsAlphaLinearOverkillSaturation;
+  bool mIsAlphaLinearOverkillReverse;
+ bool mIsAlpha;
   bool mIsParallelCalculationEnabled;
+
 
   G4EmCalculator * emcalc;
 };

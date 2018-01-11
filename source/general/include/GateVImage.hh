@@ -42,6 +42,8 @@ public:
   /// Sets the image dimensions from resolution and half size
   void SetResolutionAndHalfSize(G4ThreeVector r, G4ThreeVector h);
   void SetResolutionAndHalfSize(G4ThreeVector r, G4ThreeVector h, G4ThreeVector position);
+  void SetResolutionAndHalfSizeCylinder(G4ThreeVector r, G4ThreeVector h, G4ThreeVector position);
+  void SetResolutionAndHalfSizeCylinder(G4ThreeVector r, G4ThreeVector h);
 
   /// Sets the image dimensions from resolution and voxel size
   void SetResolutionAndVoxelSize(G4ThreeVector r, G4ThreeVector v);
@@ -120,6 +122,7 @@ public:
   int GetIndexFromPosition(const G4ThreeVector& position) const;
   int GetIndexFromPositionAndDirection(const G4ThreeVector& position, const G4ThreeVector& direction) const;
   int GetIndexFromPostPositionAndDirection(const G4ThreeVector& position, const G4ThreeVector& direction) const;
+  int GetIndexFromPositionCylindricalCS(const G4ThreeVector& position) const; 
   int GetIndexFromPostPosition(const G4ThreeVector& pre, const G4ThreeVector& post) const;
   int GetIndexFromPrePosition(const G4ThreeVector& pre, const G4ThreeVector& post) const;
   int GetIndexFromPostPosition(const double t, const double pret, const double postt, const double resolutiont) const;
@@ -170,6 +173,10 @@ protected:
   void UpdateNumberOfValues();
   void UpdateSizesFromResolutionAndHalfSize();
   void UpdateSizesFromResolutionAndVoxelSize();
+  
+  
+  void UpdateSizesFromResolutionAndHalfSizeCylinder();
+  void UpdateSizesFromResolutionAndVoxelSizeCylinder();
 
   // data for root output
   void UpdateDataForRootOutput();

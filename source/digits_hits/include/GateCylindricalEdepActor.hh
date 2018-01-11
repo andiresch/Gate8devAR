@@ -8,47 +8,43 @@ See GATE/LICENSE.txt for further details
 
 
 /*!
-  \class  GateDoseActor
-  \author thibault.frisson@creatis.insa-lyon.fr
-          laurent.guigues@creatis.insa-lyon.fr
-          david.sarrut@creatis.insa-lyon.fr
+  \class  GateCylindricalEdepActor
+  \author A.Resch
+  based on GateDoseActor
   \date	March 2011
 
-	  - DoseToWater option added by Loïc Grevillot
-	  - Dose calculation in inhomogeneous volume added by Thomas Deschler (thomas.deschler@iphc.cnrs.fr)
  */
 
 
-#ifndef GATEDOSEACTOR_HH
-#define GATEDOSEACTOR_HH
+#ifndef GATECYLINDRICALEDEPACTOR_HH
+#define GATECYLINDRICALEDEPACTOR_HH
 
 #include <G4NistManager.hh>
 
 #include "GateVImageActor.hh"
 #include "GateActorManager.hh"
 #include "G4UnitsTable.hh"
-#include "GateDoseActorMessenger.hh"
+#include "GateCylindricalEdepActorMessenger.hh"
 #include "GateImageWithStatistic.hh"
 #include "GateVoxelizedMass.hh"
 
 class G4EmCalculator;
 
-class GateDoseActor : public GateVImageActor
+class GateCylindricalEdepActor : public GateVImageActor
 {
  public:
 
   //-----------------------------------------------------------------------------
   // Actor name
-  virtual ~GateDoseActor();
+  virtual ~GateCylindricalEdepActor();
 
-  FCT_FOR_AUTO_CREATOR_ACTOR(GateDoseActor)
+  FCT_FOR_AUTO_CREATOR_ACTOR(GateCylindricalEdepActor)
 
   //-----------------------------------------------------------------------------
   // Constructs the sensor
   virtual void Construct();
 
   void EnableEdepImage(bool b) { mIsEdepImageEnabled = b; }
-  void EnableEdepToWaterImage(bool b) { mIsEdepToWaterImageEnabled = b; }
   void EnableEdepSquaredImage(bool b) { mIsEdepSquaredImageEnabled = b; }
   void EnableEdepUncertaintyImage(bool b) { mIsEdepUncertaintyImageEnabled = b; }
   void EnableDoseImage(bool b) { mIsDoseImageEnabled = b; }
@@ -64,9 +60,6 @@ class GateDoseActor : public GateVImageActor
   void SetDoseAlgorithmType(G4String b) { mDoseAlgorithmType = b; }
   void ImportMassImage(G4String b) { mImportMassImage = b; }
   void ExportMassImage(G4String b) { mExportMassImage = b; }
-
-  void VolumeFilter(G4String b) { mVolumeFilter = b; }
-  void MaterialFilter(G4String b) { mMaterialFilter = b; }
 
   virtual void BeginOfRunAction(const G4Run*r);
   virtual void BeginOfEventAction(const G4Event * event);
@@ -84,16 +77,15 @@ class GateDoseActor : public GateVImageActor
   virtual void EndOfEvent(G4HCofThisEvent*){}
 
 protected:
-  GateDoseActor(G4String name, G4int depth=0);
-  GateDoseActorMessenger* pMessenger;
+  GateCylindricalEdepActor(G4String name, G4int depth=0);
+  GateCylindricalEdepActorMessenger* pMessenger;
   GateVoxelizedMass mVoxelizedMass;
 
   int mCurrentEvent;
   StepHitType mUserStepHitType;
-
+   bool mIsCylindricalSymmetryImage;
   bool mIsLastHitEventImageEnabled;
   bool mIsEdepImageEnabled;
-  bool mIsEdepToWaterImageEnabled;
   bool mIsEdepSquaredImageEnabled;
   bool mIsEdepUncertaintyImageEnabled;
   bool mIsDoseImageEnabled;
@@ -105,10 +97,8 @@ protected:
   bool mIsNumberOfHitsImageEnabled;
   bool mIsDoseNormalisationEnabled;
   bool mIsDoseToWaterNormalisationEnabled;
-  bool mDose2WaterWarningFlag;
 
   GateImageWithStatistic mEdepImage;
-  GateImageWithStatistic mEdepToWaterImage;
   GateImageWithStatistic mDoseImage;
   GateImageWithStatistic mDoseToWaterImage;
   GateImageInt mNumberOfHitsImage;
@@ -116,7 +106,6 @@ protected:
   GateImageDouble mMassImage;
 
   G4String mEdepFilename;
-  G4String mEdepToWaterFilename;
   G4String mDoseFilename;
   G4String mDoseToWaterFilename;
   G4String mNbOfHitsFilename;
@@ -124,12 +113,9 @@ protected:
   G4String mImportMassImage;
   G4String mExportMassImage;
 
-  G4String mVolumeFilter;
-  G4String mMaterialFilter;
-
   G4EmCalculator* emcalc;
 };
 
-MAKE_AUTO_CREATOR_ACTOR(DoseActor,GateDoseActor)
+MAKE_AUTO_CREATOR_ACTOR(CylindricalEdepActor,GateCylindricalEdepActor)
 
 #endif /* end #define GATESIMULATIONSTATISTICACTOR_HH */

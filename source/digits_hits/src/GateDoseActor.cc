@@ -33,6 +33,7 @@ GateDoseActor::GateDoseActor(G4String name, G4int depth):
 
   mCurrentEvent=-1;
   mIsEdepImageEnabled = false;
+  mIsEdepToWaterImageEnabled = false;
   mIsLastHitEventImageEnabled = false;
   mIsEdepSquaredImageEnabled = false;
   mIsEdepUncertaintyImageEnabled = false;
@@ -97,6 +98,7 @@ void GateDoseActor::Construct() {
   // material for dedx computation for DoseToWater.
   G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
 
+  G4NistManager::Instance()->FindOrBuildMaterial("Water");
   // Record the stepHitType
   mUserStepHitType = mStepHitType;
 
@@ -107,7 +109,8 @@ void GateDoseActor::Construct() {
   EnableUserSteppingAction(true);
 
   // Check if at least one image is enabled
-  if (!mIsEdepImageEnabled &&
+  if (!mIsEdepImageEnabled && 
+      !mIsEdepToWaterImageEnabled && 
       !mIsDoseImageEnabled &&
       !mIsDoseToWaterImageEnabled &&
       !mIsNumberOfHitsImageEnabled &&
@@ -118,12 +121,15 @@ void GateDoseActor::Construct() {
 
   // Output Filename
   mEdepFilename = G4String(removeExtension(mSaveFilename))+"-Edep."+G4String(getExtension(mSaveFilename));
+  mEdepToWaterFilename = G4String(removeExtension(mSaveFilename))+"-EdepToWater."+G4String(getExtension(mSaveFilename));
   mDoseFilename = G4String(removeExtension(mSaveFilename))+"-Dose."+G4String(getExtension(mSaveFilename));
   mDoseToWaterFilename = G4String(removeExtension(mSaveFilename))+"-DoseToWater."+G4String(getExtension(mSaveFilename));
   mNbOfHitsFilename = G4String(removeExtension(mSaveFilename))+"-NbOfHits."+G4String(getExtension(mSaveFilename));
 
   // Set origin, transform, flag
   SetOriginTransformAndFlagToImage(mEdepImage);
+  SetOriginTransformAndFlagToImage(mEdepToWaterImage);
+  SetOriginTransformAndFlagToImage(mEdepToWaterImage);
   SetOriginTransformAndFlagToImage(mDoseImage);
   SetOriginTransformAndFlagToImage(mNumberOfHitsImage);
   SetOriginTransformAndFlagToImage(mLastHitEventImage);
@@ -147,6 +153,16 @@ void GateDoseActor::Construct() {
     mEdepImage.SetResolutionAndHalfSize(mResolution, mHalfSize, mPosition);
     mEdepImage.Allocate();
     mEdepImage.SetFilename(mEdepFilename);
+  }
+  if (mIsEdepToWaterImageEnabled) {
+    //  mEdepImage.SetLastHitEventImage(&mLastHitEventImage);
+    //mEdepImage.EnableSquaredImage(mIsEdepSquaredImageEnabled);
+    //mEdepImage.EnableUncertaintyImage(mIsEdepUncertaintyImageEnabled);
+    // Force the computation of squared image if uncertainty is enabled
+    //if (mIsEdepUncertaintyImageEnabled) mEdepImage.EnableSquaredImage(true);
+    mEdepToWaterImage.SetResolutionAndHalfSize(mResolution, mHalfSize, mPosition);
+    mEdepToWaterImage.Allocate();
+    mEdepToWaterImage.SetFilename(mEdepToWaterFilename);
   }
   if (mIsDoseImageEnabled) {
     // mDoseImage.SetLastHitEventImage(&mLastHitEventImage);
@@ -236,6 +252,7 @@ void GateDoseActor::SaveData() {
   GateVActor::SaveData(); // (not needed because done into GateImageWithStatistic)
 
   if (mIsEdepImageEnabled) mEdepImage.SaveData(mCurrentEvent+1);
+  if (mIsEdepToWaterImageEnabled) mEdepToWaterImage.SaveData(mCurrentEvent+1);
   if (mIsDoseImageEnabled) {
     if (mIsDoseNormalisationEnabled)
       mDoseImage.SaveData(mCurrentEvent+1, true);
@@ -265,6 +282,7 @@ void GateDoseActor::SaveData() {
 void GateDoseActor::ResetData() {
   if (mIsLastHitEventImageEnabled) mLastHitEventImage.Fill(-1);
   if (mIsEdepImageEnabled) mEdepImage.Reset();
+  if (mIsEdepToWaterImageEnabled) mEdepToWaterImage.Reset();
   if (mIsDoseImageEnabled) mDoseImage.Reset();
   if (mIsDoseToWaterImageEnabled) mDoseToWaterImage.Reset();
   if (mIsNumberOfHitsImageEnabled) mNumberOfHitsImage.Fill(0);
@@ -387,7 +405,7 @@ void GateDoseActor::UserSteppingActionInVoxel(const int index, const G4Step* ste
       double cut = DBL_MAX;
       cut=1;
       G4Material * material = step->GetPreStepPoint()->GetMaterial();
-      static G4Material * water = G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
+      static G4Material * water = G4NistManager::Instance()->FindOrBuildMaterial("G4Water");
       double energy = step->GetPreStepPoint()->GetKineticEnergy();
       double DEDX=0, DEDX_Water=0;
 
@@ -446,6 +464,32 @@ void GateDoseActor::UserSteppingActionInVoxel(const int index, const G4Step* ste
       else mDoseToWaterImage.AddValue(index, doseToWater);
     }
 
+  if (mIsEdepToWaterImageEnabled)
+  {
+    double edepDEDXweighted = edep;
+     if (step->GetTrack()->GetDefinition()->GetPDGCharge() != 0) {
+          const G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
+          double energy1 = step->GetPreStepPoint()->GetKineticEnergy();
+          double energy2 = step->GetPostStepPoint()->GetKineticEnergy();
+          double energy=(energy1+energy2)/2;
+          const G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
+          //const G4ParticleDefinition * p = step->GetTrack()->GetParticleDefinition();
+          //G4cout<<partname->GetParticleName()<<" charge: "<< step->GetTrack()->GetDefinition()->GetPDGCharge()<<G4endl;
+          G4double dedx = emcalc->ComputeTotalDEDX(energy, partname, material);
+          if (dedx != 0){
+              G4double dedxWater = emcalc->ComputeTotalDEDX(energy, partname->GetParticleName(), "Water") ;
+              edepDEDXweighted = edep *(dedxWater/dedx);
+          }
+          //else {
+              //G4cout<<partname->GetParticleName()<<" energy: "<< energy<<G4endl;
+          //}
+     }
+      // Compute the dedx for the current particle in the current material
+      
+      
+     mEdepToWaterImage.AddValue(index, edepDEDXweighted);
+  }
+    
   if (mIsEdepImageEnabled)
     {
       if (mIsEdepUncertaintyImageEnabled || mIsEdepSquaredImageEnabled)

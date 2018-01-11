@@ -29,6 +29,7 @@ GateDoseActorMessenger::GateDoseActorMessenger(GateDoseActor* sensor)
   pEnableDoseToWaterSquaredCmd= 0;
   pEnableDoseToWaterUncertaintyCmd= 0;
   pEnableEdepCmd= 0;
+  pEnableEdepToWaterCmd= 0;
   pEnableEdepSquaredCmd= 0;
   pEnableEdepUncertaintyCmd= 0;
   pEnableNumberOfHitsCmd= 0;
@@ -57,6 +58,7 @@ GateDoseActorMessenger::~GateDoseActorMessenger()
   if(pEnableDoseToWaterSquaredCmd) delete pEnableDoseToWaterSquaredCmd;
   if(pEnableDoseToWaterUncertaintyCmd) delete pEnableDoseToWaterUncertaintyCmd;
   if(pEnableEdepCmd) delete pEnableEdepCmd;
+  if(pEnableEdepToWaterCmd) delete pEnableEdepToWaterCmd;
   if(pEnableEdepSquaredCmd) delete pEnableEdepSquaredCmd;
   if(pEnableEdepUncertaintyCmd) delete pEnableEdepUncertaintyCmd;
   if(pEnableNumberOfHitsCmd) delete pEnableNumberOfHitsCmd;
@@ -124,6 +126,11 @@ void GateDoseActorMessenger::BuildCommands(G4String base)
   guid = G4String("Enable edep computation");
   pEnableEdepCmd->SetGuidance(guid);
 
+  n = base+"/enableEdepToWater";
+  pEnableEdepToWaterCmd = new G4UIcmdWithABool(n, this);
+  guid = G4String("Enable edepToWater computation");
+  pEnableEdepToWaterCmd->SetGuidance(guid);
+  
   n = base+"/enableSquaredEdep";
   pEnableEdepSquaredCmd = new G4UIcmdWithABool(n, this);
   guid = G4String("Enable squared edep computation");
@@ -183,6 +190,7 @@ void GateDoseActorMessenger::SetNewValue(G4UIcommand* cmd, G4String newValue)
   if (cmd == pEnableDoseToWaterSquaredCmd) pDoseActor->EnableDoseToWaterSquaredImage(pEnableDoseToWaterSquaredCmd->GetNewBoolValue(newValue));
   if (cmd == pEnableDoseToWaterUncertaintyCmd) pDoseActor->EnableDoseToWaterUncertaintyImage(pEnableDoseToWaterUncertaintyCmd->GetNewBoolValue(newValue));
   if (cmd == pEnableEdepCmd) pDoseActor->EnableEdepImage(pEnableEdepCmd->GetNewBoolValue(newValue));
+  if (cmd == pEnableEdepToWaterCmd) pDoseActor->EnableEdepToWaterImage(pEnableEdepToWaterCmd->GetNewBoolValue(newValue));
   if (cmd == pEnableEdepSquaredCmd) pDoseActor->EnableEdepSquaredImage(pEnableEdepSquaredCmd->GetNewBoolValue(newValue));
   if (cmd == pEnableEdepUncertaintyCmd) pDoseActor->EnableEdepUncertaintyImage(pEnableEdepUncertaintyCmd->GetNewBoolValue(newValue));
   if (cmd == pEnableNumberOfHitsCmd) pDoseActor->EnableNumberOfHitsImage(pEnableNumberOfHitsCmd->GetNewBoolValue(newValue));
