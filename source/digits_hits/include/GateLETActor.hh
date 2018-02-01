@@ -87,7 +87,7 @@ protected:
 
   bool mIsDoseAverageDEDX;
   bool mIsDoseAverageEdepDX;
-  
+  bool mIsFioriniFluence;
   bool mIsAverageKinEnergy;
   bool  mIsAlphaLinear;
   bool mIsAlphaLinearOverkillSaturation;

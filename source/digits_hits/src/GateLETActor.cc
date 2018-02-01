@@ -34,6 +34,7 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
   mIsAverageKinEnergy=false;
   mIsAlpha = false;
   mIsAlphaLinear=false;
+  mIsFioriniFluence=false;
   mIsAlphaLinearOverkillSaturation=false;
   mIsAlphaLinearOverkillReverse=false;
   mIsLETtoWaterEnabled = false;
@@ -78,6 +79,7 @@ void GateLETActor::Construct() {
   else if (mAveragingType == "TrackAveraged" || mAveragingType == "TrackAverage" || mAveragingType == "Track" || mAveragingType == "track" || mAveragingType == "TrackAveragedDXAveraged"){mIsTrackAverageDEDX = true;}
   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
+  else if (mAveragingType == "FioriniFluence"){mIsFioriniFluence = true;}
   else if (mAveragingType == "alphaLinear"){mIsAlphaLinear =true; mIsAlpha = true;}
   else if (mAveragingType == "alphaLinearOverkillSaturation"){mIsAlphaLinearOverkillSaturation =true; mIsAlpha = true;}
   else if (mAveragingType == "alphaLinearOverkillReverse"){mIsAlphaLinearOverkillReverse =true; mIsAlpha = true;}
@@ -94,6 +96,10 @@ void GateLETActor::Construct() {
   else if (mIsTrackAverageDEDX)
     {
       mLETFilename= removeExtension(mSaveFilename) + "-trackAveraged."+ getExtension(mSaveFilename);
+    }
+  else if (mIsFioriniFluence)
+    {
+      mLETFilename= removeExtension(mSaveFilename) + "-fioriniFluenceAveraged."+ getExtension(mSaveFilename);
     }
   else if (mIsAlpha)
     {
@@ -245,6 +251,11 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
     normalizationVal = edep;
   }
   else if (mIsTrackAverageDEDX) {
+    weightedLET=dedx*steplength;
+    normalizationVal = steplength;
+  }
+  else if (mIsFioriniFluence) {
+      // HEREEEE!!!
     weightedLET=dedx*steplength;
     normalizationVal = steplength;
   }
