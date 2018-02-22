@@ -38,7 +38,7 @@ GateLETActorMessenger::~GateLETActorMessenger()
 void GateLETActorMessenger::BuildCommands(G4String base)
 {
   G4String n = base+"/setLETtoWater";
-  pSetLETtoWaterCmd = new G4UIcmdWithABool(n, this);
+  pSetLETtoWaterCmd = new G4UIcmdWithABool(n, this); 
   G4String guid = G4String("Enable dose-to-water correction in LET calculation");
   pSetLETtoWaterCmd->SetGuidance(guid);
 

@@ -35,6 +35,7 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
   mIsAlpha = false;
   mIsAlphaLinear=false;
   mIsFioriniFluence=false;
+  mIsPalmansDoseAverage=false;
   mIsAlphaLinearOverkillSaturation=false;
   mIsAlphaLinearOverkillReverse=false;
   mIsLETtoWaterEnabled = false;
@@ -80,6 +81,7 @@ void GateLETActor::Construct() {
   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
   else if (mAveragingType == "FioriniFluence"){mIsFioriniFluence = true;}
+  else if (mAveragingType == "PalmansDose"){mIsPalmansDoseAverage = true;}
   else if (mAveragingType == "alphaLinear"){mIsAlphaLinear =true; mIsAlpha = true;}
   else if (mAveragingType == "alphaLinearOverkillSaturation"){mIsAlphaLinearOverkillSaturation =true; mIsAlpha = true;}
   else if (mAveragingType == "alphaLinearOverkillReverse"){mIsAlphaLinearOverkillReverse =true; mIsAlpha = true;}
@@ -100,6 +102,10 @@ void GateLETActor::Construct() {
   else if (mIsFioriniFluence)
     {
       mLETFilename= removeExtension(mSaveFilename) + "-fioriniFluenceAveraged."+ getExtension(mSaveFilename);
+    }
+  else if (mIsPalmansDoseAverage)
+    {
+      mLETFilename= removeExtension(mSaveFilename) + "-palmansDoseAveraged."+ getExtension(mSaveFilename);
     }
   else if (mIsAlpha)
     {
@@ -256,8 +262,17 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
   }
   else if (mIsFioriniFluence) {
       // HEREEEE!!!
+      //double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
+    //weightedLET=g_E*steplength;
     weightedLET=dedx*steplength;
     normalizationVal = steplength;
+  }
+  else if (mIsPalmansDoseAverage) {
+      // HEREEEE!!!
+      //double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
+    //weightedLET=edep/g_E;
+    weightedLET=edep*dedx;
+    normalizationVal = edep;
   }
   else if (mIsTrackAverageEdepDX) {
     weightedLET=edep;
