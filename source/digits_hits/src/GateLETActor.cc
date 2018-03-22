@@ -34,8 +34,10 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
   mIsAverageKinEnergy=false;
   mIsAlpha = false;
   mIsAlphaLinear=false;
-  mIsFioriniFluence=false;
-  mIsPalmansDoseAverage=false;
+  mIsFioriniFluenceFilm=false;
+  mIsPalmansDoseFilm=false;
+  mIsFioriniFluenceWater=false;
+  mIsPalmansDoseWater=false;
   mIsAlphaLinearOverkillSaturation=false;
   mIsAlphaLinearOverkillReverse=false;
   mIsLETtoWaterEnabled = false;
@@ -80,8 +82,10 @@ void GateLETActor::Construct() {
   else if (mAveragingType == "TrackAveraged" || mAveragingType == "TrackAverage" || mAveragingType == "Track" || mAveragingType == "track" || mAveragingType == "TrackAveragedDXAveraged"){mIsTrackAverageDEDX = true;}
   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
-  else if (mAveragingType == "FioriniFluence"){mIsFioriniFluence = true;}
-  else if (mAveragingType == "PalmansDose"){mIsPalmansDoseAverage = true;}
+  else if (mAveragingType == "FioriniFluenceFilm" || mAveragingType == "FioriniFilm" || mAveragingType == "FioriniToFilm" ){mIsFioriniFluenceFilm = true;}
+  else if (mAveragingType == "PalmansDoseFilm" || mAveragingType == "PalmansFilm" || mAveragingType == "PalmansToFilm" ){mIsPalmansDoseFilm = true;}
+  else if (mAveragingType == "FioriniFluence" || mAveragingType == "FioriniFluenceWater" || mAveragingType == "FioriniWater" || mAveragingType == "FioriniToWater" || mAveragingType == "Fiorini" ){mIsFioriniFluenceWater = true;}
+  else if (mAveragingType == "PalmansDose" || mAveragingType == "PalmansDoseWater" || mAveragingType == "PalmansWater" || mAveragingType == "PalmansToWater"  ||mAveragingType == "Palmans" ){mIsPalmansDoseWater = true;}
   else if (mAveragingType == "alphaLinear"){mIsAlphaLinear =true; mIsAlpha = true;}
   else if (mAveragingType == "alphaLinearOverkillSaturation"){mIsAlphaLinearOverkillSaturation =true; mIsAlpha = true;}
   else if (mAveragingType == "alphaLinearOverkillReverse"){mIsAlphaLinearOverkillReverse =true; mIsAlpha = true;}
@@ -99,13 +103,21 @@ void GateLETActor::Construct() {
     {
       mLETFilename= removeExtension(mSaveFilename) + "-trackAveraged."+ getExtension(mSaveFilename);
     }
-  else if (mIsFioriniFluence)
+  else if (mIsFioriniFluenceFilm)
     {
-      mLETFilename= removeExtension(mSaveFilename) + "-fioriniFluenceAveraged."+ getExtension(mSaveFilename);
+      mLETFilename= removeExtension(mSaveFilename) + "-fioriniFluenceAveragedToFilm."+ getExtension(mSaveFilename);
     }
-  else if (mIsPalmansDoseAverage)
+  else if (mIsPalmansDoseFilm)
     {
-      mLETFilename= removeExtension(mSaveFilename) + "-palmansDoseAveraged."+ getExtension(mSaveFilename);
+      mLETFilename= removeExtension(mSaveFilename) + "-palmansDoseAveragedToFilm."+ getExtension(mSaveFilename);
+    }
+      else if (mIsFioriniFluenceWater)
+    {
+      mLETFilename= removeExtension(mSaveFilename) + "-fioriniFluenceAveragedToWater."+ getExtension(mSaveFilename);
+    }
+  else if (mIsPalmansDoseWater)
+    {
+      mLETFilename= removeExtension(mSaveFilename) + "-palmansDoseAveragedToWater."+ getExtension(mSaveFilename);
     }
   else if (mIsAlpha)
     {
@@ -260,18 +272,24 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
     weightedLET=dedx*steplength;
     normalizationVal = steplength;
   }
-  else if (mIsFioriniFluence) {
-      // HEREEEE!!!
-      //double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
-    //weightedLET=g_E*steplength;
-    weightedLET=dedx*steplength;
+  else if (mIsFioriniFluenceFilm) {
+      double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
+    weightedLET=g_E*steplength;
     normalizationVal = steplength;
   }
-  else if (mIsPalmansDoseAverage) {
-      // HEREEEE!!!
-      //double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
-    //weightedLET=edep/g_E;
-    weightedLET=edep*dedx;
+  else if (mIsPalmansDoseFilm) {
+      double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
+    weightedLET=edep/g_E;
+    normalizationVal = edep;
+  }
+    else if (mIsFioriniFluenceWater) {
+      double g_E = 1 + exp(-pow(log(energy/0.4)/1.49, 2));
+    weightedLET=g_E*steplength;
+    normalizationVal = steplength;
+  }
+  else if (mIsPalmansDoseWater) {
+      double g_E = 1 + exp(-pow(log(energy/0.4)/1.49, 2));
+    weightedLET=edep/g_E;
     normalizationVal = edep;
   }
   else if (mIsTrackAverageEdepDX) {

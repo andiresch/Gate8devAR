@@ -87,13 +87,15 @@ protected:
 
   bool mIsDoseAverageDEDX;
   bool mIsDoseAverageEdepDX;
-  bool mIsFioriniFluence;
-  bool mIsPalmansDoseAverage;
+  bool mIsFioriniFluenceFilm;
+  bool mIsPalmansDoseFilm;
+  bool mIsFioriniFluenceWater;
+  bool mIsPalmansDoseWater;  
   bool mIsAverageKinEnergy;
-  bool  mIsAlphaLinear;
+  bool mIsAlphaLinear;
   bool mIsAlphaLinearOverkillSaturation;
   bool mIsAlphaLinearOverkillReverse;
- bool mIsAlpha;
+  bool mIsAlpha;
   bool mIsParallelCalculationEnabled;
 
 

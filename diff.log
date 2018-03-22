@@ -1,0 +1,102 @@
+diff --git a/source/digits_hits/include/GateLETActor.hh b/source/digits_hits/include/GateLETActor.hh
+index eb01936..773d909 100644
+--- a/source/digits_hits/include/GateLETActor.hh
++++ b/source/digits_hits/include/GateLETActor.hh
+@@ -87,8 +87,7 @@ protected:
+ 
+   bool mIsDoseAverageDEDX;
+   bool mIsDoseAverageEdepDX;
+-  bool mIsFioriniFluence;
+-  bool mIsPalmansDoseAverage;
++  
+   bool mIsAverageKinEnergy;
+   bool  mIsAlphaLinear;
+   bool mIsAlphaLinearOverkillSaturation;
+diff --git a/source/digits_hits/src/GateLETActor.cc b/source/digits_hits/src/GateLETActor.cc
+index 8ac2265..f76a27c 100644
+--- a/source/digits_hits/src/GateLETActor.cc
++++ b/source/digits_hits/src/GateLETActor.cc
+@@ -34,8 +34,6 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
+   mIsAverageKinEnergy=false;
+   mIsAlpha = false;
+   mIsAlphaLinear=false;
+-  mIsFioriniFluence=false;
+-  mIsPalmansDoseAverage=false;
+   mIsAlphaLinearOverkillSaturation=false;
+   mIsAlphaLinearOverkillReverse=false;
+   mIsLETtoWaterEnabled = false;
+@@ -80,8 +78,6 @@ void GateLETActor::Construct() {
+   else if (mAveragingType == "TrackAveraged" || mAveragingType == "TrackAverage" || mAveragingType == "Track" || mAveragingType == "track" || mAveragingType == "TrackAveragedDXAveraged"){mIsTrackAverageDEDX = true;}
+   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
+   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
+-  else if (mAveragingType == "FioriniFluence"){mIsFioriniFluence = true;}
+-  else if (mAveragingType == "PalmansDose"){mIsPalmansDoseAverage = true;}
+   else if (mAveragingType == "alphaLinear"){mIsAlphaLinear =true; mIsAlpha = true;}
+   else if (mAveragingType == "alphaLinearOverkillSaturation"){mIsAlphaLinearOverkillSaturation =true; mIsAlpha = true;}
+   else if (mAveragingType == "alphaLinearOverkillReverse"){mIsAlphaLinearOverkillReverse =true; mIsAlpha = true;}
+@@ -99,14 +95,6 @@ void GateLETActor::Construct() {
+     {
+       mLETFilename= removeExtension(mSaveFilename) + "-trackAveraged."+ getExtension(mSaveFilename);
+     }
+-  else if (mIsFioriniFluence)
+-    {
+-      mLETFilename= removeExtension(mSaveFilename) + "-fioriniFluenceAveraged."+ getExtension(mSaveFilename);
+-    }
+-  else if (mIsPalmansDoseAverage)
+-    {
+-      mLETFilename= removeExtension(mSaveFilename) + "-palmansDoseAveraged."+ getExtension(mSaveFilename);
+-    }
+   else if (mIsAlpha)
+     {
+       mLETFilename= removeExtension(mSaveFilename) + "-alpha."+ getExtension(mSaveFilename);
+@@ -260,20 +248,6 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
+     weightedLET=dedx*steplength;
+     normalizationVal = steplength;
+   }
+-  else if (mIsFioriniFluence) {
+-      // HEREEEE!!!
+-      //double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
+-    //weightedLET=g_E*steplength;
+-    weightedLET=dedx*steplength;
+-    normalizationVal = steplength;
+-  }
+-  else if (mIsPalmansDoseAverage) {
+-      // HEREEEE!!!
+-      //double g_E = 2.13 - 1.12/ ( 1+ pow((1.25/energy), 2.05));
+-    //weightedLET=edep/g_E;
+-    weightedLET=edep*dedx;
+-    normalizationVal = edep;
+-  }
+   else if (mIsTrackAverageEdepDX) {
+     weightedLET=edep;
+     normalizationVal = steplength;
+diff --git a/source/digits_hits/src/GateLETActorMessenger.cc b/source/digits_hits/src/GateLETActorMessenger.cc
+index 98e3ed9..8d86b23 100644
+--- a/source/digits_hits/src/GateLETActorMessenger.cc
++++ b/source/digits_hits/src/GateLETActorMessenger.cc
+@@ -38,7 +38,7 @@ GateLETActorMessenger::~GateLETActorMessenger()
+ void GateLETActorMessenger::BuildCommands(G4String base)
+ {
+   G4String n = base+"/setLETtoWater";
+-  pSetLETtoWaterCmd = new G4UIcmdWithABool(n, this); 
++  pSetLETtoWaterCmd = new G4UIcmdWithABool(n, this);
+   G4String guid = G4String("Enable dose-to-water correction in LET calculation");
+   pSetLETtoWaterCmd->SetGuidance(guid);
+ 
+diff --git a/source/digits_hits/src/GateVImageActor.cc b/source/digits_hits/src/GateVImageActor.cc
+index 74e4080..f6652f2 100644
+--- a/source/digits_hits/src/GateVImageActor.cc
++++ b/source/digits_hits/src/GateVImageActor.cc
+@@ -200,10 +200,10 @@ void GateVImageActor::Construct()
+ 
+   // Copy rotation matrix from attached image, if the attached volume
+   // is a GateVImageVolume
+-  //if (dynamic_cast<GateVImageVolume*>(mVolume) != 0) {
++  if (dynamic_cast<GateVImageVolume*>(mVolume) != 0) {
+     GateVImageVolume * volAsImage = (GateVImageVolume*)mVolume;
+     mImage.SetTransformMatrix(volAsImage->GetTransformMatrix());
+-  //}
++  }
+ 
+   // DEBUG
+   GateMessage("Actor", 3, "GateVImageActor -- Construct: position of parent = " <<mVolume->GetPhysicalVolume()->GetObjectTranslation()  << Gateendl);

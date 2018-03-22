@@ -200,10 +200,10 @@ void GateVImageActor::Construct()
 
   // Copy rotation matrix from attached image, if the attached volume
   // is a GateVImageVolume
-  //if (dynamic_cast<GateVImageVolume*>(mVolume) != 0) {
+  if (dynamic_cast<GateVImageVolume*>(mVolume) != 0) {
     GateVImageVolume * volAsImage = (GateVImageVolume*)mVolume;
     mImage.SetTransformMatrix(volAsImage->GetTransformMatrix());
-  //}
+  }
 
   // DEBUG
   GateMessage("Actor", 3, "GateVImageActor -- Construct: position of parent = " <<mVolume->GetPhysicalVolume()->GetObjectTranslation()  << Gateendl);
