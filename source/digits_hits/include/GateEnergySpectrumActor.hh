@@ -75,6 +75,13 @@ public:
   void SetLETmin(double v) {mLETmin = v;}
   void SetLETmax(double v) {mLETmax = v;}
   void SetNLETBins(double v) {mLETBins = v;}
+  
+  G4double GetQmin() {return mQmin; }
+  G4double GetQmax() {return mQmax; }
+  int GetNQBins() {return mQBins; }
+  void SetQmin(double v) {mQmin = v;}
+  void SetQmax(double v) {mQmax = v;}
+  void SetNQBins(double v) {mQBins = v;}
 
   void SetEmin(double v) {mEmin = v;}
   void SetEmax(double v) {mEmax = v;}
@@ -88,6 +95,7 @@ public:
   void SetEdepmax(double v) {mEdepmax = v;}
   void SetEdepNBins(int v) {mEdepNBins = v;}
   void SetLETSpectrumCalc(bool b) {mEnableLETSpectrumFlag = b; }
+  void SetQSpectrumCalc(bool b) {mEnableQSpectrumFlag = b; }
   void SetSaveAsTextFlag(bool b) { mSaveAsTextFlag = b; }
   void SetSaveAsTextDiscreteEnergySpectrumFlag(bool b) { mSaveAsDiscreteSpectrumTextFlag = b; if (b) SetSaveAsTextFlag(b); }
 
@@ -98,6 +106,7 @@ protected:
   G4String mHistName;
 
   TH1D * pEnergySpectrum;
+  TH1D * pEnergyEdepSpectrum;
   TH1D * pDeltaEc;
   TH1D * pEdep;
   TH2D * pEdepTime;
@@ -107,6 +116,11 @@ protected:
   G4double mLETmin;
   G4double mLETmax;
   int mLETBins;
+
+  TH1D * pQSpectrum;
+  G4double mQmin;
+  G4double mQmax;
+  int mQBins;
   
   double mEmin;
   double mEmax;
@@ -138,6 +152,7 @@ protected:
   bool mSaveAsTextFlag;
   bool mSaveAsDiscreteSpectrumTextFlag;
   bool mEnableLETSpectrumFlag;
+  bool mEnableQSpectrumFlag;
   
   G4EmCalculator * emcalc;
 };

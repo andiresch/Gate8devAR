@@ -30,7 +30,7 @@ public:
   void SetNewValue(G4UIcommand*, G4String);
 
 protected:
-  GateCylindricalEdepActor * pDoseActor;
+  GateCylindricalEdepActor * pCylindicalEdepActor;
 
   G4UIcmdWithABool * pEnableDoseCmd;
   G4UIcmdWithABool * pEnableDoseSquaredCmd;
@@ -39,6 +39,11 @@ protected:
   G4UIcmdWithABool * pEnableDoseToWaterSquaredCmd;
   G4UIcmdWithABool * pEnableDoseToWaterUncertaintyCmd;
   G4UIcmdWithABool * pEnableEdepCmd;
+  
+  G4UIcmdWithABool * pEnableEdepHadElasticCmd;
+  G4UIcmdWithABool * pEnableEdepInelasticCmd;
+  G4UIcmdWithABool * pEnableEdepRestCmd;
+  
   G4UIcmdWithABool * pEnableEdepSquaredCmd;
   G4UIcmdWithABool * pEnableEdepUncertaintyCmd;
   G4UIcmdWithABool * pEnableNumberOfHitsCmd;

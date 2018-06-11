@@ -16,7 +16,7 @@ See GATE/LICENSE.txt for further details
 //-----------------------------------------------------------------------------
 GateCylindricalEdepActorMessenger::GateCylindricalEdepActorMessenger(GateCylindricalEdepActor* sensor)
   :GateImageActorMessenger(sensor),
-  pDoseActor(sensor)
+  pCylindicalEdepActor(sensor)
 {
 
   pEnableDoseCmd = 0;
@@ -29,6 +29,11 @@ GateCylindricalEdepActorMessenger::GateCylindricalEdepActorMessenger(GateCylindr
   pEnableDoseToWaterSquaredCmd= 0;
   pEnableDoseToWaterUncertaintyCmd= 0;
   pEnableEdepCmd= 0;
+  
+  pEnableEdepHadElasticCmd= 0;
+  pEnableEdepInelasticCmd= 0;
+  pEnableEdepRestCmd= 0;
+  
   pEnableEdepSquaredCmd= 0;
   pEnableEdepUncertaintyCmd= 0;
   pEnableNumberOfHitsCmd= 0;
@@ -54,6 +59,11 @@ GateCylindricalEdepActorMessenger::~GateCylindricalEdepActorMessenger()
   if(pEnableDoseToWaterSquaredCmd) delete pEnableDoseToWaterSquaredCmd;
   if(pEnableDoseToWaterUncertaintyCmd) delete pEnableDoseToWaterUncertaintyCmd;
   if(pEnableEdepCmd) delete pEnableEdepCmd;
+  if(pEnableEdepHadElasticCmd) delete pEnableEdepHadElasticCmd;
+  if(pEnableEdepInelasticCmd) delete pEnableEdepInelasticCmd;
+  if(pEnableEdepRestCmd) delete pEnableEdepRestCmd;
+  
+  
   if(pEnableEdepSquaredCmd) delete pEnableEdepSquaredCmd;
   if(pEnableEdepUncertaintyCmd) delete pEnableEdepUncertaintyCmd;
   if(pEnableNumberOfHitsCmd) delete pEnableNumberOfHitsCmd;
@@ -73,6 +83,7 @@ void GateCylindricalEdepActorMessenger::BuildCommands(G4String base)
   pEnableDoseCmd = new G4UIcmdWithABool(n, this);
   G4String guid = G4String("Enable dose computation");
   pEnableDoseCmd->SetGuidance(guid);
+  
 
   //n = base+"/enableSquaredDose";
   //pEnableDoseSquaredCmd = new G4UIcmdWithABool(n, this);
@@ -108,6 +119,22 @@ void GateCylindricalEdepActorMessenger::BuildCommands(G4String base)
   pEnableEdepCmd = new G4UIcmdWithABool(n, this);
   guid = G4String("Enable edep computation");
   pEnableEdepCmd->SetGuidance(guid);
+
+  n = base+"/enableEdepHadElastic";
+  pEnableEdepHadElasticCmd = new G4UIcmdWithABool(n, this);
+  guid = G4String("Enable edep had elastic computation");
+  pEnableEdepHadElasticCmd->SetGuidance(guid);
+  
+  n = base+"/enableEdepInelastic";
+  pEnableEdepInelasticCmd = new G4UIcmdWithABool(n, this);
+  guid = G4String("Enable edep computation");
+  pEnableEdepInelasticCmd->SetGuidance(guid);
+
+  n = base+"/enableEdepRest";
+  pEnableEdepRestCmd = new G4UIcmdWithABool(n, this);
+  guid = G4String("Enable edep computation");
+  pEnableEdepRestCmd->SetGuidance(guid);
+
 
   //n = base+"/enableSquaredEdep";
   //pEnableEdepSquaredCmd = new G4UIcmdWithABool(n, this);
@@ -148,24 +175,27 @@ void GateCylindricalEdepActorMessenger::BuildCommands(G4String base)
 //-----------------------------------------------------------------------------
 void GateCylindricalEdepActorMessenger::SetNewValue(G4UIcommand* cmd, G4String newValue)
 {
-  if (cmd == pEnableDoseCmd) pDoseActor->EnableDoseImage(pEnableDoseCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseSquaredCmd) pDoseActor->EnableDoseSquaredImage(pEnableDoseSquaredCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseUncertaintyCmd) pDoseActor->EnableDoseUncertaintyImage(pEnableDoseUncertaintyCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseToWaterCmd) pDoseActor->EnableDoseToWaterImage(pEnableDoseToWaterCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseToWaterSquaredCmd) pDoseActor->EnableDoseToWaterSquaredImage(pEnableDoseToWaterSquaredCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseToWaterUncertaintyCmd) pDoseActor->EnableDoseToWaterUncertaintyImage(pEnableDoseToWaterUncertaintyCmd->GetNewBoolValue(newValue));
-  if (cmd == pEnableEdepCmd) pDoseActor->EnableEdepImage(pEnableEdepCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableEdepSquaredCmd) pDoseActor->EnableEdepSquaredImage(pEnableEdepSquaredCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableEdepUncertaintyCmd) pDoseActor->EnableEdepUncertaintyImage(pEnableEdepUncertaintyCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableNumberOfHitsCmd) pDoseActor->EnableNumberOfHitsImage(pEnableNumberOfHitsCmd->GetNewBoolValue(newValue));
+  if (cmd == pEnableDoseCmd) pCylindicalEdepActor->EnableDoseImage(pEnableDoseCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseSquaredCmd) pCylindicalEdepActor->EnableDoseSquaredImage(pEnableDoseSquaredCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseUncertaintyCmd) pCylindicalEdepActor->EnableDoseUncertaintyImage(pEnableDoseUncertaintyCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseToWaterCmd) pCylindicalEdepActor->EnableDoseToWaterImage(pEnableDoseToWaterCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseToWaterSquaredCmd) pCylindicalEdepActor->EnableDoseToWaterSquaredImage(pEnableDoseToWaterSquaredCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseToWaterUncertaintyCmd) pCylindicalEdepActor->EnableDoseToWaterUncertaintyImage(pEnableDoseToWaterUncertaintyCmd->GetNewBoolValue(newValue));
+  if (cmd == pEnableEdepCmd) pCylindicalEdepActor->EnableEdepImage(pEnableEdepCmd->GetNewBoolValue(newValue));
+    if (cmd == pEnableEdepHadElasticCmd) pCylindicalEdepActor->EnableEdepHadElasticImage(pEnableEdepHadElasticCmd->GetNewBoolValue(newValue));
+      if (cmd == pEnableEdepInelasticCmd) pCylindicalEdepActor->EnableEdepInelasticImage(pEnableEdepInelasticCmd->GetNewBoolValue(newValue));
+       if (cmd == pEnableEdepRestCmd) pCylindicalEdepActor->EnableEdepRestImage(pEnableEdepRestCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableEdepSquaredCmd) pCylindicalEdepActor->EnableEdepSquaredImage(pEnableEdepSquaredCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableEdepUncertaintyCmd) pCylindicalEdepActor->EnableEdepUncertaintyImage(pEnableEdepUncertaintyCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableNumberOfHitsCmd) pCylindicalEdepActor->EnableNumberOfHitsImage(pEnableNumberOfHitsCmd->GetNewBoolValue(newValue));
 
-  //if (cmd == pEnableDoseNormToMaxCmd) pDoseActor->EnableDoseNormalisationToMax(pEnableDoseNormToMaxCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseNormToIntegralCmd) pDoseActor->EnableDoseNormalisationToIntegral(pEnableDoseNormToIntegralCmd->GetNewBoolValue(newValue));
-  //if (cmd == pEnableDoseToWaterNormCmd) pDoseActor->EnableDoseToWaterNormalisation(pEnableDoseToWaterNormCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseNormToMaxCmd) pCylindicalEdepActor->EnableDoseNormalisationToMax(pEnableDoseNormToMaxCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseNormToIntegralCmd) pCylindicalEdepActor->EnableDoseNormalisationToIntegral(pEnableDoseNormToIntegralCmd->GetNewBoolValue(newValue));
+  //if (cmd == pEnableDoseToWaterNormCmd) pCylindicalEdepActor->EnableDoseToWaterNormalisation(pEnableDoseToWaterNormCmd->GetNewBoolValue(newValue));
 
-  //if (cmd == pSetDoseAlgorithmCmd) pDoseActor->SetDoseAlgorithmType(newValue);
-  //if (cmd == pImportMassImageCmd) pDoseActor->ImportMassImage(newValue);
-  //if (cmd == pExportMassImageCmd) pDoseActor->ExportMassImage(newValue);
+  //if (cmd == pSetDoseAlgorithmCmd) pCylindicalEdepActor->SetDoseAlgorithmType(newValue);
+  //if (cmd == pImportMassImageCmd) pCylindicalEdepActor->ImportMassImage(newValue);
+  //if (cmd == pExportMassImageCmd) pCylindicalEdepActor->ExportMassImage(newValue);
 
   GateImageActorMessenger::SetNewValue( cmd, newValue);
 }

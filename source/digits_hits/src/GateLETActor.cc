@@ -42,6 +42,8 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
   mIsAlphaLinearOverkillReverse=false;
   mIsLETtoWaterEnabled = false;
   mIsParallelCalculationEnabled = false;
+  mIsKillParticle=false;
+  mIsCreatorProcess = false;
   mAveragingType = "DoseAverage";
   pMessenger = new GateLETActorMessenger(this);
   GateDebugMessageDec("Actor",4,"GateLETActor() -- end\n");
@@ -68,6 +70,8 @@ void GateLETActor::Construct() {
   // Find G4_WATER. This it needed here because we will used this
   // material for dedx computation for LETtoWater.
   G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
+  
+ 
 
   // Enable callbacks
   EnableBeginOfRunAction(true);
@@ -82,6 +86,8 @@ void GateLETActor::Construct() {
   else if (mAveragingType == "TrackAveraged" || mAveragingType == "TrackAverage" || mAveragingType == "Track" || mAveragingType == "track" || mAveragingType == "TrackAveragedDXAveraged"){mIsTrackAverageDEDX = true;}
   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
+  else if (mAveragingType == "killParticle"){mIsKillParticle = true;}
+  else if (mAveragingType == "creatorProcess"){mIsCreatorProcess = true;}
   else if (mAveragingType == "FioriniFluenceFilm" || mAveragingType == "FioriniFilm" || mAveragingType == "FioriniToFilm" ){mIsFioriniFluenceFilm = true;}
   else if (mAveragingType == "PalmansDoseFilm" || mAveragingType == "PalmansFilm" || mAveragingType == "PalmansToFilm" ){mIsPalmansDoseFilm = true;}
   else if (mAveragingType == "FioriniFluence" || mAveragingType == "FioriniFluenceWater" || mAveragingType == "FioriniWater" || mAveragingType == "FioriniToWater" || mAveragingType == "Fiorini" ){mIsFioriniFluenceWater = true;}
@@ -229,7 +235,9 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
   GateDebugMessageInc("Actor", 4, "enedepo = " << step->GetTotalEnergyDeposit() << Gateendl);
   GateDebugMessageInc("Actor", 4, "weight = " <<  step->GetTrack()->GetWeight() << Gateendl);
   //	G4cout << "In LET actor: " << step->GetTrack()->GetDefinition()->GetAtomicNumber() << G4endl;
-
+ //G4NistManager* man=G4NistManager::Instance();
+  //G4Material* Water = man->FindOrBuildMaterial("Water");
+  //G4cout<<"mean excitation: "<< Water->GetIonisation()->GetMeanExcitationEnergy()/eV<<G4endl;
   // Get edep and current particle weight
   const double weight = step->GetTrack()->GetWeight();
 
@@ -291,6 +299,41 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
       double g_E = 1 + exp(-pow(log(energy/0.4)/1.49, 2));
     weightedLET=edep/g_E;
     normalizationVal = edep;
+  }
+  else if (mIsCreatorProcess){
+    
+      if (step->GetTrack()->GetCreatorProcess() )
+      {
+            G4cout<<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<G4endl;
+          if (strcmp(step->GetTrack()->GetCreatorProcess()->GetProcessName(), "hadElastic") == 0){
+            G4cout<<"process: hadElastic; control: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            G4cout<<"process Type (elastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            G4cout<<"process SubType (elastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl;
+            }
+          else if (strcmp(step->GetTrack()->GetCreatorProcess()->GetProcessName(), "protonInelastic") == 0){
+            G4cout<<"process: prot Inelastic; control: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            G4cout<<"process Type (inelastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            G4cout<<"process SubType (inelastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl;
+            }
+          else {
+            G4cout<<"process: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            G4cout<<"process Type (else) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            G4cout<<"process SubType (else) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl;
+            }
+        
+      }
+  }
+  else if (mIsKillParticle) {
+     
+     if (  step->GetTrack()->GetParentID() > 0){
+        //step->GetTrack()->SetTrackStatus(fStopAndKill);
+        G4double thisCutVal=1.0;
+        step->GetTrack()->SetKineticEnergy(thisCutVal*eV);
+        //G4cout<<"kill part"<<G4endl;
+        //G4cout<<"get kin energy"<< step->GetTrack()->GetKineticEnergy()*MeV<<" MeV"<<G4endl;
+        weightedLET=edep;
+    }
+    normalizationVal = 1;
   }
   else if (mIsTrackAverageEdepDX) {
     weightedLET=edep;

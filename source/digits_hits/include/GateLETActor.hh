@@ -93,12 +93,14 @@ protected:
   bool mIsPalmansDoseWater;  
   bool mIsAverageKinEnergy;
   bool mIsAlphaLinear;
+  bool mIsKillParticle;
   bool mIsAlphaLinearOverkillSaturation;
   bool mIsAlphaLinearOverkillReverse;
   bool mIsAlpha;
+  bool mIsCreatorProcess;
   bool mIsParallelCalculationEnabled;
 
-
+  //G4Material* Water;
   G4EmCalculator * emcalc;
 };
 

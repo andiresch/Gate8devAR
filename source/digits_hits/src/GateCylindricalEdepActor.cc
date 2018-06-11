@@ -28,6 +28,9 @@ GateCylindricalEdepActor::GateCylindricalEdepActor(G4String name, G4int depth):
 
   mCurrentEvent=-1;
   mIsEdepImageEnabled = false;
+  mIsEdepHadElasticImageEnabled = false;
+  mIsEdepInelasticImageEnabled = false;
+  mIsEdepRestImageEnabled = false;
   
   mIsDoseImageEnabled = false;
  
@@ -82,11 +85,17 @@ void GateCylindricalEdepActor::Construct() {
 
   // Output Filename
   mEdepFilename = G4String(removeExtension(mSaveFilename))+"-Edep."+G4String(getExtension(mSaveFilename));
+  mEdepHadElasticFilename= G4String(removeExtension(mSaveFilename))+"-EdepHadElastic."+G4String(getExtension(mSaveFilename));
+  mEdepInelasticFilename = G4String(removeExtension(mSaveFilename))+"-EdepInelastic."+G4String(getExtension(mSaveFilename));
+  mEdepRestFilename = G4String(removeExtension(mSaveFilename))+"-EdepRest."+G4String(getExtension(mSaveFilename));
   mDoseFilename = G4String(removeExtension(mSaveFilename))+"-Dose."+G4String(getExtension(mSaveFilename));
   //mDoseToWaterFilename = G4String(removeExtension(mSaveFilename))+"-DoseToWater."+G4String(getExtension(mSaveFilename));
   
   // Set origin, transform, flag
   SetOriginTransformAndFlagToImage(mEdepImage);
+  SetOriginTransformAndFlagToImage(mEdepHadElasticImage);
+  SetOriginTransformAndFlagToImage(mEdepInelasticImage);
+  SetOriginTransformAndFlagToImage(mEdepRestImage);
   SetOriginTransformAndFlagToImage(mDoseImage);
   //SetOriginTransformAndFlagToImage(mLastHitEventImage);
   //SetOriginTransformAndFlagToImage(mDoseToWaterImage);
@@ -100,17 +109,24 @@ void GateCylindricalEdepActor::Construct() {
     ////mIsLastHitEventImageEnabled = true;
   ////}
   if (mIsEdepImageEnabled) {
-    //  mEdepImage.SetLastHitEventImage(&mLastHitEventImage);
-    //mEdepImage.EnableSquaredImage(mIsEdepSquaredImageEnabled);
-    //mEdepImage.EnableUncertaintyImage(mIsEdepUncertaintyImageEnabled);
-    //// Force the computation of squared image if uncertainty is enabled
-    //if (mIsEdepUncertaintyImageEnabled) mEdepImage.EnableSquaredImage(true);
-    //G4ThreeVector cylinderAxis=G4ThreeVector(0,0,1);
-    //cylinderAxis.setZ(1.0);
-    //G4cout<<"edepactorCS z " << cylinderAxis.z()<<G4endl<<G4endl;
     mEdepImage.SetResolutionAndHalfSizeCylinder(mResolution, mHalfSize, mPosition);
     mEdepImage.Allocate();
     mEdepImage.SetFilename(mEdepFilename);
+  }
+  if (mIsEdepHadElasticImageEnabled) {
+    mEdepHadElasticImage.SetResolutionAndHalfSizeCylinder(mResolution, mHalfSize, mPosition);
+    mEdepHadElasticImage.Allocate();
+    mEdepHadElasticImage.SetFilename(mEdepHadElasticFilename);
+  }
+  if (mIsEdepInelasticImageEnabled) {
+    mEdepInelasticImage.SetResolutionAndHalfSizeCylinder(mResolution, mHalfSize, mPosition);
+    mEdepInelasticImage.Allocate();
+    mEdepInelasticImage.SetFilename(mEdepInelasticFilename);
+  }
+  if (mIsEdepRestImageEnabled) {
+    mEdepRestImage.SetResolutionAndHalfSizeCylinder(mResolution, mHalfSize, mPosition);
+    mEdepRestImage.Allocate();
+    mEdepRestImage.SetFilename(mEdepRestFilename);
   }
   if (mIsDoseImageEnabled) {
     // mDoseImage.SetLastHitEventImage(&mLastHitEventImage);
@@ -181,6 +197,9 @@ void GateCylindricalEdepActor::SaveData() {
 		  //}
 		  //mDoseTrackAverageLETImage.Write(mLETFilename);
   if (mIsEdepImageEnabled) mEdepImage.SaveData(mCurrentEvent+1);
+  if (mIsEdepHadElasticImageEnabled) mEdepHadElasticImage.SaveData(mCurrentEvent+1);
+  if (mIsEdepInelasticImageEnabled) mEdepInelasticImage.SaveData(mCurrentEvent+1);
+  if (mIsEdepRestImageEnabled) mEdepRestImage.SaveData(mCurrentEvent+1);
   if (mIsDoseImageEnabled) {
     //if (mIsDoseNormalisationEnabled)
       mDoseImage.SaveData(mCurrentEvent+1);
@@ -202,6 +221,9 @@ void GateCylindricalEdepActor::SaveData() {
 //-----------------------------------------------------------------------------
 void GateCylindricalEdepActor::ResetData() {
   if (mIsEdepImageEnabled) mEdepImage.Reset();
+  if (mIsEdepHadElasticImageEnabled) mEdepHadElasticImage.Reset();
+  if (mIsEdepInelasticImageEnabled) mEdepInelasticImage.Reset();
+  if (mIsEdepRestImageEnabled) mEdepRestImage.Reset();
   if (mIsDoseImageEnabled) mDoseImage.Reset();
   //if (mIsDoseToWaterImageEnabled) mDoseToWaterImage.Reset();
 
@@ -349,6 +371,64 @@ void GateCylindricalEdepActor::UserSteppingActionInVoxel(const int index, const 
       //else mDoseToWaterImage.AddValue(index, doseToWater);
     //}
 
+  if (mIsEdepHadElasticImageEnabled)
+    {
+    if (step->GetTrack()->GetCreatorProcess() )
+      {
+            //G4cout<<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<G4endl;
+          //if (strcmp(step->GetTrack()->GetCreatorProcess()->GetProcessName(), "hadElastic") == 0)
+          if ((step->GetTrack()->GetCreatorProcess()->GetProcessType() == 4) && (step->GetTrack()->GetCreatorProcess()->GetProcessSubType() == 111))
+          {
+            //G4cout<<"process: hadElastic; control: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            //G4cout<<"process Type (elastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            //G4cout<<"process SubType (elastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl;
+            mEdepHadElasticImage.AddValue(index, edep);
+            }
+        }
+    }
+    
+  if (mIsEdepInelasticImageEnabled)
+    {
+    if (step->GetTrack()->GetCreatorProcess() )
+    {
+          //if ((strcmp(step->GetTrack()->GetCreatorProcess()->GetProcessName(), "protonInelastic") == 0) || (strcmp(step->GetTrack()->GetCreatorProcess()->GetProcessName(), "IonInelastic") == 0))
+          if ((step->GetTrack()->GetCreatorProcess()->GetProcessType() == 4) && (step->GetTrack()->GetCreatorProcess()->GetProcessSubType() == 121))
+          {
+            //G4cout<<"process: prot Inelastic; control: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            //G4cout<<"process Type (inelastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            //G4cout<<"process SubType (inelastic) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl;
+            mEdepInelasticImage.AddValue(index, edep);
+            }
+            //else if ((step->GetTrack()->GetCreatorProcess()->GetProcessType() == 4) && (step->GetTrack()->GetCreatorProcess()->GetProcessSubType() == 111))
+            //{
+                //G4cout<<"process: hadElastic; control: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            ////
+            //}
+            //else
+            //{
+            //G4cout<<"else:process: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            //G4cout<<"else:process Type (else) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            //G4cout<<"else:process SubType (else) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl;
+            //}
+      }
+    }
+            
+            
+  if (mIsEdepRestImageEnabled)
+    {
+    if (step->GetTrack()->GetCreatorProcess() )
+    {
+          //if (step->GetTrack()->GetCreatorProcess()->GetProcessType() != 4)
+          if (!((step->GetTrack()->GetCreatorProcess()->GetProcessType() == 4 ) && ((step->GetTrack()->GetCreatorProcess()->GetProcessSubType() == 121) ||  (step->GetTrack()->GetCreatorProcess()->GetProcessSubType() == 111 ) )))
+          {
+            //G4cout<<"process: "<<step->GetTrack()->GetCreatorProcess()->GetProcessName() <<G4endl;
+            //G4cout<<"process Type (else) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessType() <<G4endl;
+            //G4cout<<"process SubType (else) : "<<step->GetTrack()->GetCreatorProcess()->GetProcessSubType() <<G4endl<<G4endl;
+            mEdepRestImage.AddValue(index, edep);
+            }
+        
+      }
+    }
   if (mIsEdepImageEnabled)
     {
       //if (mIsEdepUncertaintyImageEnabled || mIsEdepSquaredImageEnabled)

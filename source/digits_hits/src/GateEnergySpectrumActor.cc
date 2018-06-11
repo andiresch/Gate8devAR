@@ -35,6 +35,10 @@ GateEnergySpectrumActor::GateEnergySpectrumActor(G4String name, G4int depth):
   mLETmax = 100.;
   mLETBins = 200;
 
+  mQmin = 0.;
+  mQmax = 1.;
+  mQBins = 200;
+
   mEdepmin = 0.;
   mEdepmax = 50.;
   mEdepNBins = 100;
@@ -53,6 +57,7 @@ GateEnergySpectrumActor::GateEnergySpectrumActor(G4String name, G4int depth):
   mSaveAsTextFlag = true;
   mSaveAsDiscreteSpectrumTextFlag = false;
   mEnableLETSpectrumFlag = true;
+  mEnableQSpectrumFlag = true;
   emcalc = new G4EmCalculator;
 
   pMessenger = new GateEnergySpectrumActorMessenger(this);
@@ -90,8 +95,14 @@ void GateEnergySpectrumActor::Construct()
   pEnergySpectrum = new TH1D("energySpectrum","Energy Spectrum",GetENBins(),GetEmin() ,GetEmax() );
   pEnergySpectrum->SetXTitle("Energy (MeV)");
   
+  pEnergyEdepSpectrum = new TH1D("energyEdepSpectrum","Energy Edep Spectrum",GetENBins(),GetEmin() ,GetEmax() );
+  pEnergyEdepSpectrum->SetXTitle("Energy (MeV)");
+  
   pLETSpectrum = new TH1D("LETSpectrum","LET Spectrum",GetNLETBins(),GetLETmin() ,GetLETmax() );
   pLETSpectrum->SetXTitle("LET (keV/um)");
+  
+  pQSpectrum = new TH1D("QSpectrum","Q Spectrum",GetNQBins(),GetQmin() ,GetQmax() );
+  pQSpectrum->SetXTitle("Q (qq/MeV)");
 
   pEdep  = new TH1D("edepHisto","Energy deposited per event",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
   pEdep->SetXTitle("E_{dep} (MeV)");
@@ -123,6 +134,7 @@ void GateEnergySpectrumActor::SaveData()
   // Also output data as txt if enabled
   if (mSaveAsTextFlag) {
     SaveAsText(pEnergySpectrum, mSaveFilename);
+    SaveAsText(pEnergyEdepSpectrum, mSaveFilename);
     SaveAsText(pEdep, mSaveFilename);
     // SaveAsText(pEdepTime, mSaveFilename); no TH2D
     SaveAsText(pEdepTrack, mSaveFilename);
@@ -136,8 +148,10 @@ void GateEnergySpectrumActor::SaveData()
 void GateEnergySpectrumActor::ResetData()
 {
   pEnergySpectrum->Reset();
+  pEnergyEdepSpectrum->Reset();
   pEdep->Reset();
   pLETSpectrum->Reset();
+  pQSpectrum->Reset();
   pEdepTime->Reset();
   pEdepTrack->Reset();
   pDeltaEc->Reset();
@@ -232,12 +246,15 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
   Ef=step->GetPostStepPoint()->GetKineticEnergy();
   if(newTrack){
     Ei=step->GetPreStepPoint()->GetKineticEnergy();
-    pEnergySpectrum->Fill(Ei/MeV,step->GetTrack()->GetWeight());
+    pEnergySpectrum->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight());
+
     if (mSaveAsDiscreteSpectrumTextFlag) {
       mDiscreteSpectrum.Fill(Ei/MeV, step->GetTrack()->GetWeight());
     }
     newTrack=false;
   }
+   pEnergyEdepSpectrum->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
+  
   if(mEnableLETSpectrumFlag) {
   //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
   G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
@@ -247,6 +264,22 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
   G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
   G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
   pLETSpectrum->Fill(dedx/(keV/um));
+  }  
+  
+  if(mEnableQSpectrumFlag) {
+  //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
+  //G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
+  G4double energy1Q = step->GetPreStepPoint()->GetKineticEnergy();
+  G4double energy2Q = step->GetPostStepPoint()->GetKineticEnergy();
+  G4double energyQ=(energy1Q+energy2Q)/2;
+  G4int chargeQ = step->GetTrack()->GetDefinition()->GetAtomicNumber();
+  
+  //G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
+  //G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
+  G4double Q =chargeQ; // to convert Int to Double
+  Q*=Q; // now chargeQ is squared
+  Q/=(energyQ/MeV); // now we divide chargeQ^2 / energyQ
+  pQSpectrum->Fill(Q,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
   }
 }
 //-----------------------------------------------------------------------------

@@ -32,6 +32,9 @@ GateEnergySpectrumActorMessenger::~GateEnergySpectrumActorMessenger()
   delete pLETminCmd;
   delete pLETmaxCmd;
   delete pNLETBinsCmd;
+  delete pQminCmd;
+  delete pQmaxCmd;
+  delete pNQBinsCmd;
   delete pNBinsCmd;
   delete pEdepmaxCmd;
   delete pEdepminCmd;
@@ -122,6 +125,34 @@ void GateEnergySpectrumActorMessenger::BuildCommands(G4String base)
   guidance = G4String("Set number of bins of the energy spectrum");
   pNLETBinsCmd->SetGuidance(guidance);
   pNLETBinsCmd->SetParameterName("NLETbins", false);
+  
+  
+  bb = base+"/enableQSpectrum";
+  pEnableQSpectrumCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable Q spectrum");
+  pEnableQSpectrumCmd->SetGuidance(guidance);
+  
+    bb = base+"/QSpectrum/setQmin";
+  pQminCmd = new G4UIcmdWithADoubleAndUnit(bb, this);
+  guidance = G4String("Set minimum Q of the Q spectrum");
+  pQminCmd->SetGuidance(guidance);
+  pQminCmd->SetParameterName("Qmin", false);
+  pQminCmd->SetDefaultUnit("keV/um");
+  
+  bb = base+"/QSpectrum/setQmax";
+  pQmaxCmd = new G4UIcmdWithADoubleAndUnit(bb, this);
+  guidance = G4String("Set maximum Q of the Q spectrum");
+  pQmaxCmd->SetGuidance(guidance);
+  pQmaxCmd->SetParameterName("Qmax", false);
+  pQmaxCmd->SetDefaultUnit("keV/um");
+  
+  bb = base+"/QSpectrum/setNumberOfBins";
+  pNQBinsCmd = new G4UIcmdWithAnInteger(bb, this);
+  guidance = G4String("Set number of bins of the energy spectrum");
+  pNQBinsCmd->SetGuidance(guidance);
+  pNQBinsCmd->SetParameterName("NQbins", false);
+  
+  
 }
 //-----------------------------------------------------------------------------
 
@@ -139,6 +170,10 @@ void GateEnergySpectrumActorMessenger::SetNewValue(G4UIcommand* cmd, G4String ne
   if(cmd == pLETmaxCmd) pActor->SetLETmax(  pLETmaxCmd->GetNewDoubleValue(newValue)  ) ;
   if(cmd == pNLETBinsCmd) pActor->SetNLETBins(  pNLETBinsCmd->GetNewIntValue(newValue)  ) ;
   
+  if(cmd == pQminCmd){  pActor->SetQmin(  pQminCmd->GetNewDoubleValue(newValue)  ) ;   }
+  if(cmd == pQmaxCmd) pActor->SetQmax(  pQmaxCmd->GetNewDoubleValue(newValue)  ) ;
+  if(cmd == pNQBinsCmd) pActor->SetNQBins(  pNQBinsCmd->GetNewIntValue(newValue)  ) ;
+  
   if(cmd == pNBinsCmd) pActor->SetENBins(  pNBinsCmd->GetNewIntValue(newValue)  ) ;
   if(cmd == pEdepminCmd) pActor->SetEdepmin(  pEdepminCmd->GetNewDoubleValue(newValue)  ) ;
   if(cmd == pEdepmaxCmd) pActor->SetEdepmax(  pEdepmaxCmd->GetNewDoubleValue(newValue)  ) ;
@@ -146,6 +181,7 @@ void GateEnergySpectrumActorMessenger::SetNewValue(G4UIcommand* cmd, G4String ne
   if(cmd == pSaveAsText) pActor->SetSaveAsTextFlag(  pSaveAsText->GetNewBoolValue(newValue)  ) ;
   if(cmd == pSaveAsTextDiscreteEnergySpectrum) pActor->SetSaveAsTextDiscreteEnergySpectrumFlag(  pSaveAsTextDiscreteEnergySpectrum->GetNewBoolValue(newValue)  ) ;
   if(cmd == pEnableLETSpectrumCmd) pActor->SetLETSpectrumCalc(  pEnableLETSpectrumCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableQSpectrumCmd) pActor->SetQSpectrumCalc(  pEnableQSpectrumCmd->GetNewBoolValue(newValue)  ) ;
   GateActorMessenger::SetNewValue(cmd,newValue);
 }
 //-----------------------------------------------------------------------------

@@ -27,6 +27,7 @@ See GATE/LICENSE.txt for further details
 #include "GateCylindricalEdepActorMessenger.hh"
 #include "GateImageWithStatistic.hh"
 #include "GateVoxelizedMass.hh"
+#include "G4VProcess.hh"
 
 class G4EmCalculator;
 
@@ -45,6 +46,11 @@ class GateCylindricalEdepActor : public GateVImageActor
   virtual void Construct();
 
   void EnableEdepImage(bool b) { mIsEdepImageEnabled = b; }
+  
+  void EnableEdepHadElasticImage(bool b) { mIsEdepHadElasticImageEnabled = b; }
+  void EnableEdepInelasticImage(bool b) { mIsEdepInelasticImageEnabled = b; }
+  void EnableEdepRestImage(bool b) { mIsEdepRestImageEnabled = b; }
+  
   void EnableEdepSquaredImage(bool b) { mIsEdepSquaredImageEnabled = b; }
   void EnableEdepUncertaintyImage(bool b) { mIsEdepUncertaintyImageEnabled = b; }
   void EnableDoseImage(bool b) { mIsDoseImageEnabled = b; }
@@ -86,6 +92,11 @@ protected:
    bool mIsCylindricalSymmetryImage;
   bool mIsLastHitEventImageEnabled;
   bool mIsEdepImageEnabled;
+  
+  bool mIsEdepHadElasticImageEnabled;
+  bool mIsEdepInelasticImageEnabled;
+  bool mIsEdepRestImageEnabled;
+  
   bool mIsEdepSquaredImageEnabled;
   bool mIsEdepUncertaintyImageEnabled;
   bool mIsDoseImageEnabled;
@@ -99,6 +110,10 @@ protected:
   bool mIsDoseToWaterNormalisationEnabled;
 
   GateImageWithStatistic mEdepImage;
+  GateImageWithStatistic mEdepHadElasticImage;
+  GateImageWithStatistic mEdepInelasticImage;
+  GateImageWithStatistic mEdepRestImage;
+  
   GateImageWithStatistic mDoseImage;
   GateImageWithStatistic mDoseToWaterImage;
   GateImageInt mNumberOfHitsImage;
@@ -106,6 +121,10 @@ protected:
   GateImageDouble mMassImage;
 
   G4String mEdepFilename;
+  G4String mEdepHadElasticFilename;
+  G4String mEdepInelasticFilename;
+  G4String mEdepRestFilename;
+  
   G4String mDoseFilename;
   G4String mDoseToWaterFilename;
   G4String mNbOfHitsFilename;
