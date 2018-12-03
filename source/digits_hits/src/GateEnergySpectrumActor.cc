@@ -368,7 +368,10 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
     
     if (mEnableEnergySpectrumFluenceCosFlag){
         if (momentumDir.z() >= 0){
-            pEnergySpectrumFluenceCos->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*momentumDir.z());
+            double Emean = (Ei+Ef)/2/MeV;
+            double invAngle = 1/acos(momentumDir.z());
+            if (invAngle > 10) invAngle = 10;
+            pEnergySpectrumFluenceCos->Fill(Emean,step->GetTrack()->GetWeight()*invAngle);
         }
     }
     // uncommented A.Resch 30.Nov 2018
