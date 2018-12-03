@@ -65,6 +65,17 @@ protected:
   G4UIcmdWithABool          * pSaveAsTextDiscreteEnergySpectrum;
   G4UIcmdWithABool          * pEnableLETSpectrumCmd;
   G4UIcmdWithABool          * pEnableQSpectrumCmd;
+  G4UIcmdWithABool          * pEnableEnergySpectrumNbPartCmd;
+  G4UIcmdWithABool          * pEnableEnergySpectrumFluenceCosCmd;
+  G4UIcmdWithABool          * pEnableEnergySpectrumFluenceTrackCmd;
+  G4UIcmdWithABool          * pEnableeEnergySpectrumEdepCmd;
+  G4UIcmdWithABool          * pEnableEdepHistoCmd;
+  G4UIcmdWithABool          * pEnableEdepTimeHistoCmd;
+  G4UIcmdWithABool          * pEnableEdepTrackHistoCmd;
+  G4UIcmdWithABool          * pEnableElossHistoCmd;
+  
+  G4UIcmdWithABool          * pEnableLogBinningCMD;
+  
 
 }; // end class GateEnergySpectrumActorMessenger
 //-----------------------------------------------------------------------------

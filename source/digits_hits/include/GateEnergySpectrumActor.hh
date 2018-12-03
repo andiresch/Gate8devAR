@@ -28,6 +28,7 @@
 #include <TFile.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TMath.h>
 
 class G4EmCalculator;
 //-----------------------------------------------------------------------------
@@ -99,6 +100,18 @@ public:
   void SetSaveAsTextFlag(bool b) { mSaveAsTextFlag = b; }
   void SetSaveAsTextDiscreteEnergySpectrumFlag(bool b) { mSaveAsDiscreteSpectrumTextFlag = b; if (b) SetSaveAsTextFlag(b); }
 
+  void SetESpectrumNbPartCalc(bool b) {mEnableEnergySpectrumNbPartFlag = b; }
+  void SetESpectrumFluenceCosCalc(bool b) {mEnableEnergySpectrumFluenceCosFlag = b; }
+  void SetESpectrumFluenceTrackCalc(bool b) {mEnableEnergySpectrumFluenceTrackFlag = b; }
+  void SetESpectrumEdepCalc(bool b) {mEnableEnergySpectrumEdepFlag = b; }
+
+  void SetEdepHistoCalc(bool b) {mEnableEdepHistoFlag = b; }
+  void SetEdepTimeHistoCalc(bool b) {mEnableEdepTimeHistoFlag= b; }
+  void SetEdepTrackHistoCalc(bool b) {mEnableEdepTrackHistoFlag = b; }
+  void SetElossHistoCalc(bool b) {mEnableElossHistoFlag = b; }
+  
+  
+  void SetLogBinning(bool b) {mEnableLogBinning = b; }
 protected:
   GateEnergySpectrumActor(G4String name, G4int depth=0);
 
@@ -106,6 +119,16 @@ protected:
   G4String mHistName;
 
   TH1D * pEnergySpectrum;
+  TH1D * pEnergySpectrumFluence;
+  TH1D * pEnergySpectrumTrack;
+  //TH1D * ;
+  //TH1D * ;
+  //TH1D * ;
+  TH1D * pEnergySpectrumNbPart;
+  TH1D * pEnergySpectrumFluenceCos;
+  TH1D * pEnergySpectrumFluenceTrack;
+  
+  //TH2D * pEnergySpectrumTrack2D;
   TH1D * pEnergyEdepSpectrum;
   TH1D * pDeltaEc;
   TH1D * pEdep;
@@ -116,11 +139,15 @@ protected:
   G4double mLETmin;
   G4double mLETmax;
   int mLETBins;
+  G4double pEnergySpectrumTrackNorm;
 
   TH1D * pQSpectrum;
   G4double mQmin;
   G4double mQmax;
   int mQBins;
+  
+  double * eBinV;
+  double dEn;
   
   double mEmin;
   double mEmax;
@@ -153,6 +180,18 @@ protected:
   bool mSaveAsDiscreteSpectrumTextFlag;
   bool mEnableLETSpectrumFlag;
   bool mEnableQSpectrumFlag;
+  bool mEnableEnergySpectrumNbPartFlag;
+  bool mEnableEnergySpectrumFluenceCosFlag;
+  bool mEnableEnergySpectrumFluenceTrackFlag;
+  bool mEnableEnergySpectrumEdepFlag;
+  bool mEnableEdepHistoFlag;
+  bool mEnableEdepTimeHistoFlag;
+  bool mEnableEdepTrackHistoFlag;
+  bool mEnableElossHistoFlag;
+  
+  bool mEnableLogBinning;
+  
+  double pEnergySpectrumFluenceTrackNorm;
   
   G4EmCalculator * emcalc;
 };

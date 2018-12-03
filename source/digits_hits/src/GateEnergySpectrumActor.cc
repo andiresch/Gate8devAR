@@ -33,11 +33,11 @@ GateEnergySpectrumActor::GateEnergySpectrumActor(G4String name, G4int depth):
   
   mLETmin = 0.;
   mLETmax = 100.;
-  mLETBins = 200;
+  mLETBins = 1000;
 
   mQmin = 0.;
-  mQmax = 1.;
-  mQBins = 200;
+  mQmax = 10.;
+  mQBins = 2000;
 
   mEdepmin = 0.;
   mEdepmax = 50.;
@@ -53,11 +53,25 @@ GateEnergySpectrumActor::GateEnergySpectrumActor(G4String name, G4int depth):
   sumM2=0.;
   sumM3=0.;
   edep = 0.;
-
-  mSaveAsTextFlag = true;
+  pEnergySpectrumFluenceTrackNorm = 0.;
+  mSaveAsTextFlag = false;
   mSaveAsDiscreteSpectrumTextFlag = false;
+
+  
   mEnableLETSpectrumFlag = true;
   mEnableQSpectrumFlag = true;
+  mEnableEnergySpectrumNbPartFlag = false;
+  mEnableEnergySpectrumFluenceCosFlag = false;
+  mEnableEnergySpectrumFluenceTrackFlag = false;
+  mEnableEnergySpectrumEdepFlag = true;
+  
+  mEnableEdepHistoFlag = false;
+  mEnableEdepTimeHistoFlag = false;
+  mEnableEdepTrackHistoFlag = false;
+  mEnableElossHistoFlag = false;
+  
+  mEnableLogBinning = false;  
+  
   emcalc = new G4EmCalculator;
 
   pMessenger = new GateEnergySpectrumActorMessenger(this);
@@ -89,35 +103,92 @@ void GateEnergySpectrumActor::Construct()
   EnablePostUserTrackingAction(true);
   EnableUserSteppingAction(true);
   EnableEndOfEventAction(true); // for save every n
-
+  if (mEnableLogBinning){
+     //G4cout<< "Before Loop: Emin: "<< mEmin<<G4endl;
+     //G4cout<< "Before Loop: Emmax: "<< mEmax<<G4endl;
+      double mEminLog = mEmin;
+      if (mEminLog < 0.000001) mEminLog = 0.001;
+      double energyLogBinV_LB = TMath::Log10(mEminLog);
+      double energyLogBinV_UB = TMath::Log10(mEmax); 
+      dEn = (energyLogBinV_UB - energyLogBinV_LB)/((double)mENBins );
+      eBinV = new double[mENBins+1];
+      //G4cout << "yes yes yes" <<G4endl<<G4endl;
+      for (int j = 0; j < (mENBins+1); j++) {
+          
+          double linSpacedV = energyLogBinV_LB + (double)j   * dEn;
+          //G4cout<<"Linear: "<< linSpacedV << G4endl;
+          eBinV[j] = TMath::Power(10,  linSpacedV);
+          //G4cout<< eBinV[j] << G4endl;
+          //G4cout<<j<<G4endl;
+          //j++;
+      }
+      //G4cout<< "end of loop"<<G4endl;
+      //for (int i = 0; i <= mENBins; i++) G4cout << eBinV[i]<<G4endl;
+  }
+  //G4cout<< "After Loop: Emin: "<< mEmin<<G4endl;
+     //G4cout<< "Before Loop: Emmax: "<< mEmax<<G4endl;
+  //G4cout<< "Before init ifs"<<G4endl;
+  
   pTfile = new TFile(mSaveFilename,"RECREATE");
+  //G4cout<< "After init ifs"<<G4endl;
+  if (mEnableEnergySpectrumNbPartFlag){
+      //G4cout<<"Get EN bins"<<GetENBins()<<G4cout;
+      pEnergySpectrumNbPart = new TH1D("energySpectrum","Energy Spectrum",GetENBins(),GetEmin() ,GetEmax() );
+      pEnergySpectrumNbPart->SetXTitle("Energy (MeV)");  
+  }
+  //G4cout<< "Before init ifs"<<G4endl;
+  if (mEnableEnergySpectrumFluenceCosFlag){
+      if (!mEnableLogBinning){
+          //G4cout<< "Do we enter here?"<<G4endl;
+          pEnergySpectrumFluenceCos = new TH1D("energySpectrum fluence 1/cos","Energy Spectrum fluence 1/cos",GetENBins(),GetEmin() ,GetEmax() );
+      }
+      else {
+          //G4cout<< "here is a problem?"<<G4endl;
+          pEnergySpectrumFluenceCos = new TH1D("energySpectrum fluence cos log bin","Energy Spectrum fluence cos log bin",mENBins,eBinV);
+          //G4cout<< "managed TH1D init"<<G4endl;
+      }
+      pEnergySpectrumFluenceCos->SetXTitle("Energy (MeV)");  
+  }
 
-  pEnergySpectrum = new TH1D("energySpectrum","Energy Spectrum",GetENBins(),GetEmin() ,GetEmax() );
-  pEnergySpectrum->SetXTitle("Energy (MeV)");
+  if (mEnableEnergySpectrumFluenceTrackFlag){
+      pEnergySpectrumFluenceTrack = new TH1D("energySpectrumFluenceTrack","Energy Spectrum fluence Track",GetENBins(),GetEmin() ,GetEmax() );
+      pEnergySpectrumFluenceTrack->SetXTitle("Energy (MeV)");
+  } 
   
-  pEnergyEdepSpectrum = new TH1D("energyEdepSpectrum","Energy Edep Spectrum",GetENBins(),GetEmin() ,GetEmax() );
-  pEnergyEdepSpectrum->SetXTitle("Energy (MeV)");
+  if (mEnableEnergySpectrumEdepFlag){
+      pEnergyEdepSpectrum = new TH1D("energyEdepSpectrum","Energy Edep Spectrum",GetENBins(),GetEmin() ,GetEmax() );
+      pEnergyEdepSpectrum->SetXTitle("Energy (MeV)");
+  } 
+  if (mEnableLETSpectrumFlag) {
+      pLETSpectrum = new TH1D("LETSpectrum","LET Spectrum",GetNLETBins(),GetLETmin() ,GetLETmax() );
+      pLETSpectrum->SetXTitle("LET (keV/um)");
+  }
+  if (mEnableQSpectrumFlag) {
+      pQSpectrum = new TH1D("QSpectrum","Q Spectrum",GetNQBins(),GetQmin() ,GetQmax() );
+      pQSpectrum->SetXTitle("Q (qq/MeV)");
+  }
   
-  pLETSpectrum = new TH1D("LETSpectrum","LET Spectrum",GetNLETBins(),GetLETmin() ,GetLETmax() );
-  pLETSpectrum->SetXTitle("LET (keV/um)");
-  
-  pQSpectrum = new TH1D("QSpectrum","Q Spectrum",GetNQBins(),GetQmin() ,GetQmax() );
-  pQSpectrum->SetXTitle("Q (qq/MeV)");
+  if (mEnableEdepHistoFlag){
+      pEdep  = new TH1D("edepHisto","Energy deposited per event",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
+      pEdep->SetXTitle("E_{dep} (MeV)");
+  } 
 
-  pEdep  = new TH1D("edepHisto","Energy deposited per event",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
-  pEdep->SetXTitle("E_{dep} (MeV)");
+  if (mEnableEdepTimeHistoFlag){
+      pEdepTime  = new TH2D("edepHistoTime","Energy deposited with time per event",
+                            GetEdepNBins(),0,20,GetEdepNBins(),GetEdepmin(),GetEdepmax());
+      pEdepTime->SetXTitle("t (ns)");
+      pEdepTime->SetYTitle("E_{dep} (MeV)");
+  } 
 
-  pEdepTime  = new TH2D("edepHistoTime","Energy deposited with time per event",
-                        GetEdepNBins(),0,20,GetEdepNBins(),GetEdepmin(),GetEdepmax());
-  pEdepTime->SetXTitle("t (ns)");
-  pEdepTime->SetYTitle("E_{dep} (MeV)");
+  if (mEnableEdepTrackHistoFlag){
+      pEdepTrack  = new TH1D("edepTrackHisto","Energy deposited per track",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
+      pEdepTrack->SetXTitle("E_{dep} (MeV)");
+  } 
 
-  pEdepTrack  = new TH1D("edepTrackHisto","Energy deposited per track",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
-  pEdepTrack->SetXTitle("E_{dep} (MeV)");
-
-  pDeltaEc = new TH1D("eLossHisto","Energy loss",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
-  pDeltaEc ->SetXTitle("E_{loss} (MeV)");
-
+  if (mEnableElossHistoFlag){
+      pDeltaEc = new TH1D("eLossHisto","Energy loss",GetEdepNBins(),GetEdepmin() ,GetEdepmax() );
+      pDeltaEc ->SetXTitle("E_{loss} (MeV)");
+  } 
   ResetData();
 }
 //-----------------------------------------------------------------------------
@@ -127,19 +198,23 @@ void GateEnergySpectrumActor::Construct()
 /// Save data
 void GateEnergySpectrumActor::SaveData()
 {
+  //pEnergySpectrumFluenceTrack->Scale(1/pEnergySpectrumFluenceTrackNorm);
   GateVActor::SaveData();
   pTfile->Write();
-  //pTfile->Close();
-
+  pTfile->Close();
+  
+ //uncommented by A.Resch 30 Nov 2018; not sure it works anyway
   // Also output data as txt if enabled
-  if (mSaveAsTextFlag) {
-    SaveAsText(pEnergySpectrum, mSaveFilename);
-    SaveAsText(pEnergyEdepSpectrum, mSaveFilename);
-    SaveAsText(pEdep, mSaveFilename);
-    // SaveAsText(pEdepTime, mSaveFilename); no TH2D
-    SaveAsText(pEdepTrack, mSaveFilename);
-    SaveAsText(pDeltaEc, mSaveFilename);
-  }
+  //if (mSaveAsTextFlag) {
+    //SaveAsText(pEnergySpectrumNbPart, mSaveFilename);
+    //SaveAsText(pEnergySpectrumFluenceCos, mSaveFilename);
+    //SaveAsText(pEnergySpectrumFluenceTrack, mSaveFilename);
+    //SaveAsText(pEnergyEdepSpectrum, mSaveFilename);
+    //SaveAsText(pEdep, mSaveFilename);
+    //// SaveAsText(pEdepTime, mSaveFilename); no TH2D
+    //SaveAsText(pEdepTrack, mSaveFilename);
+    //SaveAsText(pDeltaEc, mSaveFilename);
+  //}
 }
 //-----------------------------------------------------------------------------
 
@@ -147,14 +222,42 @@ void GateEnergySpectrumActor::SaveData()
 //-----------------------------------------------------------------------------
 void GateEnergySpectrumActor::ResetData()
 {
-  pEnergySpectrum->Reset();
-  pEnergyEdepSpectrum->Reset();
-  pEdep->Reset();
-  pLETSpectrum->Reset();
-  pQSpectrum->Reset();
-  pEdepTime->Reset();
-  pEdepTrack->Reset();
-  pDeltaEc->Reset();
+  if (mEnableEnergySpectrumNbPartFlag){
+    pEnergySpectrumNbPart->Reset();
+  }
+  
+  if (mEnableEnergySpectrumFluenceCosFlag){
+      pEnergySpectrumFluenceCos->Reset();
+  }
+  
+  if (mEnableEnergySpectrumFluenceTrackFlag){
+      pEnergySpectrumFluenceTrack->Reset();
+  }
+  if (mEnableEnergySpectrumEdepFlag){
+      pEnergyEdepSpectrum->Reset();
+  }
+  
+  if (mEnableLETSpectrumFlag) {
+      pLETSpectrum->Reset();
+  }
+  if (mEnableQSpectrumFlag){
+      pQSpectrum->Reset();
+  }
+  
+  if (mEnableEdepHistoFlag){
+      pEdep->Reset();
+  }
+  if (mEnableEdepTimeHistoFlag){
+      pEdepTime->Reset();
+  }
+  
+  if (mEnableEdepTrackHistoFlag){
+      pEdepTrack->Reset();
+  }
+  
+  if (mEnableElossHistoFlag){
+      pDeltaEc->Reset();
+  }
   nEvent = 0;
 }
 //-----------------------------------------------------------------------------
@@ -184,10 +287,19 @@ void GateEnergySpectrumActor::BeginOfEventAction(const G4Event*)
 void GateEnergySpectrumActor::EndOfEventAction(const G4Event*)
 {
   GateDebugMessage("Actor", 3, "GateEnergySpectrumActor -- End of Event\n");
-  if (edep > 0) {
-    pEdep->Fill(edep/MeV);
-    pEdepTime->Fill(tof/ns,edep/MeV);
-  }
+  
+    if (edep > 0) {
+        if (mEnableEdepHistoFlag){
+            pEdep->Fill(edep/MeV);
+        }
+        if (mEnableEdepTimeHistoFlag){
+            pEdepTime->Fill(tof/ns,edep/MeV);
+        }
+      }
+  
+  
+  
+      
   nEvent++;
 }
 //-----------------------------------------------------------------------------
@@ -209,8 +321,9 @@ void GateEnergySpectrumActor::PostUserTrackingAction(const GateVVolume *, const 
 {
   GateDebugMessage("Actor", 3, "GateEnergySpectrumActor -- End of Track\n");
   double eloss = Ei-Ef;
-  if (eloss > 0) pDeltaEc->Fill(eloss/MeV,t->GetWeight() );
-  if (edepTrack > 0)  pEdepTrack->Fill(edepTrack/MeV,t->GetWeight() );
+  if (mEnableElossHistoFlag && eloss > 0) pDeltaEc->Fill(eloss/MeV,t->GetWeight() );
+  
+  if (mEnableEdepTrackHistoFlag && edepTrack > 0)  pEdepTrack->Fill(edepTrack/MeV,t->GetWeight() );
 }
 //-----------------------------------------------------------------------------
 
@@ -246,40 +359,59 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
   Ef=step->GetPostStepPoint()->GetKineticEnergy();
   if(newTrack){
     Ei=step->GetPreStepPoint()->GetKineticEnergy();
-    pEnergySpectrum->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight());
-
-    if (mSaveAsDiscreteSpectrumTextFlag) {
-      mDiscreteSpectrum.Fill(Ei/MeV, step->GetTrack()->GetWeight());
+     
+    if (mEnableEnergySpectrumNbPartFlag){
+        pEnergySpectrumNbPart->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight());
     }
+    
+    G4ThreeVector momentumDir = step->GetTrack()->GetMomentumDirection(); 
+    
+    if (mEnableEnergySpectrumFluenceCosFlag){
+        if (momentumDir.z() >= 0){
+            pEnergySpectrumFluenceCos->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*momentumDir.z());
+        }
+    }
+    // uncommented A.Resch 30.Nov 2018
+    //if (mSaveAsDiscreteSpectrumTextFlag) {
+      //mDiscreteSpectrum.Fill(Ei/MeV, step->GetTrack()->GetWeight());
+    //}
     newTrack=false;
   }
-   pEnergyEdepSpectrum->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
   
+   if (mEnableEnergySpectrumFluenceTrackFlag){
+       G4double stepLength = step->GetStepLength();
+       pEnergySpectrumFluenceTrack->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*stepLength);
+       pEnergySpectrumFluenceTrackNorm+= stepLength;
+   }
+   if (mEnableEnergySpectrumEdepFlag){
+       pEnergyEdepSpectrum->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
+   }
+   
   if(mEnableLETSpectrumFlag) {
-  //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
-  G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
-  G4double energy1 = step->GetPreStepPoint()->GetKineticEnergy();
-  G4double energy2 = step->GetPostStepPoint()->GetKineticEnergy();
-  G4double energy=(energy1+energy2)/2;
-  G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
-  G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
-  pLETSpectrum->Fill(dedx/(keV/um));
+      //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
+      G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
+      G4double energy1 = step->GetPreStepPoint()->GetKineticEnergy();
+      G4double energy2 = step->GetPostStepPoint()->GetKineticEnergy();
+      G4double energy=(energy1+energy2)/2;
+      G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
+      G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
+      pLETSpectrum->Fill(dedx/(keV/um),step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
   }  
   
   if(mEnableQSpectrumFlag) {
-  //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
-  //G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
-  G4double energy1Q = step->GetPreStepPoint()->GetKineticEnergy();
-  G4double energy2Q = step->GetPostStepPoint()->GetKineticEnergy();
-  G4double energyQ=(energy1Q+energy2Q)/2;
-  G4int chargeQ = step->GetTrack()->GetDefinition()->GetAtomicNumber();
-  
-  //G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
-  //G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
-  G4double Q =chargeQ; // to convert Int to Double
-  Q*=Q; // now chargeQ is squared
-  Q/=(energyQ/MeV); // now we divide chargeQ^2 / energyQ
-  pQSpectrum->Fill(Q,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
+      //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
+      //G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
+      G4double energy1Q = step->GetPreStepPoint()->GetKineticEnergy();
+      G4double energy2Q = step->GetPostStepPoint()->GetKineticEnergy();
+      G4double energyQ=(energy1Q+energy2Q)/2;
+      G4int chargeQ = step->GetTrack()->GetDefinition()->GetAtomicNumber();
+      
+      //G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
+      //G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
+      G4double Q =chargeQ; // to convert Int to Double
+      Q*=Q; // now chargeQ is squared
+      Q/=(energyQ/MeV); // now we divide chargeQ^2 / energyQ
+      pQSpectrum->Fill(Q,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
   }
 }
 //-----------------------------------------------------------------------------

@@ -92,6 +92,7 @@ protected:
   bool mIsFioriniFluenceWater;
   bool mIsPalmansDoseWater;  
   bool mIsAverageKinEnergy;
+  bool mIsVerboseStoppingPower;
   bool mIsAlphaLinear;
   bool mIsKillParticle;
   bool mIsAlphaLinearOverkillSaturation;

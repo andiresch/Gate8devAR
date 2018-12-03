@@ -32,6 +32,7 @@ GateLETActor::GateLETActor(G4String name, G4int depth):
   mIsDoseAverageDEDX=false;
   mIsDoseAverageEdepDX=false;
   mIsAverageKinEnergy=false;
+  mIsVerboseStoppingPower=false;
   mIsAlpha = false;
   mIsAlphaLinear=false;
   mIsFioriniFluenceFilm=false;
@@ -87,6 +88,7 @@ void GateLETActor::Construct() {
   else if (mAveragingType == "TrackAveragedEdep" || mAveragingType == "TrackAverageEdep" ){mIsTrackAverageEdepDX = true;}
   else if (mAveragingType == "AverageKinEnergy"){mIsAverageKinEnergy = true;}
   else if (mAveragingType == "killParticle"){mIsKillParticle = true;}
+  else if (mAveragingType == "verbose"){mIsVerboseStoppingPower = true;mIsDoseAverageDEDX = true;}
   else if (mAveragingType == "creatorProcess"){mIsCreatorProcess = true;}
   else if (mAveragingType == "FioriniFluenceFilm" || mAveragingType == "FioriniFilm" || mAveragingType == "FioriniToFilm" ){mIsFioriniFluenceFilm = true;}
   else if (mAveragingType == "PalmansDoseFilm" || mAveragingType == "PalmansFilm" || mAveragingType == "PalmansToFilm" ){mIsPalmansDoseFilm = true;}
@@ -265,6 +267,23 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
   // Compute the dedx for the current particle in the current material
   double weightedLET =0;
   G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
+    //G4cout<<"in here"<<G4endl; 
+        //G4cout<<energy <<" " << dedx <<G4endl;
+   if (mIsVerboseStoppingPower) {
+       //G4cout<<"in here"<<G4endl;
+        G4cout<<"dedx pre: " << emcalc->ComputeElectronicDEDX(energy1, partname, material)<<G4endl;
+        G4cout<<"dedx mid: " << emcalc->ComputeElectronicDEDX(energy, partname, material)<<G4endl;
+        G4cout<<"edep/dx : "<<edep/steplength<<G4endl;
+        G4cout<<"Energy pre: "<<energy1/MeV <<G4endl;
+        G4cout<<"Energy mid: "<<energy <<G4endl;
+        G4cout<<"Energy post: "<<energy2<<G4endl;
+        G4cout<<"StepLength: "<<steplength/mm<<G4endl;
+        G4cout<<"E1 - dx*dedx(E1) :" << energy1 - steplength/mm*emcalc->ComputeElectronicDEDX(energy1, partname, material) <<G4endl;
+        G4cout<<"E1 - dx*dedx(Eq) :" << energy1 - steplength/mm*dedx<<G4endl<<G4endl;
+        G4NistManager* man=G4NistManager::Instance();
+        G4Material* Water = man->FindOrBuildMaterial("Water");
+        G4cout<<"mean excitation: "<< Water->GetIonisation()->GetMeanExcitationEnergy()/eV<<G4endl;
+   }
 
   if (dedx==0){
     GateDebugMessage("Actor", 5, "GateLETActor dedx == 0 : do nothing\n");

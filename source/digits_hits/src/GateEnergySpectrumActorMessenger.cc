@@ -153,6 +153,50 @@ void GateEnergySpectrumActorMessenger::BuildCommands(G4String base)
   pNQBinsCmd->SetParameterName("NQbins", false);
   
   
+  bb = base+"/enableNbPartSpectrum";
+  pEnableEnergySpectrumNbPartCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable Number of Particle spectrum");
+  pEnableEnergySpectrumNbPartCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableFluenceCosSpectrum";
+  pEnableEnergySpectrumFluenceCosCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable fluence spectrum from momentum direction");
+  pEnableEnergySpectrumFluenceCosCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableFluenceTrackSpectrum";
+  pEnableEnergySpectrumFluenceTrackCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable fluence spectrum from track length in volume");
+  pEnableEnergySpectrumFluenceTrackCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableEdepSpectrum";
+  pEnableeEnergySpectrumEdepCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable energy deposition spectrum");
+  pEnableeEnergySpectrumEdepCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableEdepHisto";
+  pEnableEdepHistoCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable edep histogram");
+  pEnableEdepHistoCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableEdepTimeHisto";
+  pEnableEdepTimeHistoCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable edep time histogram");
+  pEnableEdepTimeHistoCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableEdepTrackHisto";
+  pEnableEdepTrackHistoCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable edep track histogram");
+  pEnableEdepTrackHistoCmd->SetGuidance(guidance);
+  
+  bb = base+"/enableElossHisto";
+  pEnableElossHistoCmd = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Enable energy loss histogram");
+  pEnableElossHistoCmd->SetGuidance(guidance);
+  
+  bb = base+"/setLogBinWidth";
+  pEnableLogBinningCMD = new G4UIcmdWithABool(bb, this);
+  guidance = G4String("Set logarithmic binning in energy");
+  pEnableLogBinningCMD->SetGuidance(guidance);
 }
 //-----------------------------------------------------------------------------
 
@@ -182,6 +226,18 @@ void GateEnergySpectrumActorMessenger::SetNewValue(G4UIcommand* cmd, G4String ne
   if(cmd == pSaveAsTextDiscreteEnergySpectrum) pActor->SetSaveAsTextDiscreteEnergySpectrumFlag(  pSaveAsTextDiscreteEnergySpectrum->GetNewBoolValue(newValue)  ) ;
   if(cmd == pEnableLETSpectrumCmd) pActor->SetLETSpectrumCalc(  pEnableLETSpectrumCmd->GetNewBoolValue(newValue)  ) ;
   if(cmd == pEnableQSpectrumCmd) pActor->SetQSpectrumCalc(  pEnableQSpectrumCmd->GetNewBoolValue(newValue)  ) ;
+  
+  if(cmd == pEnableEnergySpectrumNbPartCmd) pActor->SetESpectrumNbPartCalc(  pEnableEnergySpectrumNbPartCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableEnergySpectrumFluenceCosCmd) pActor->SetESpectrumFluenceCosCalc(  pEnableEnergySpectrumFluenceCosCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableEnergySpectrumFluenceTrackCmd) pActor->SetESpectrumFluenceTrackCalc(  pEnableEnergySpectrumFluenceTrackCmd->GetNewBoolValue(newValue)  ) ;
+  
+  if(cmd == pEnableeEnergySpectrumEdepCmd) pActor->SetESpectrumEdepCalc(  pEnableeEnergySpectrumEdepCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableEdepHistoCmd) pActor->SetEdepHistoCalc (  pEnableEdepHistoCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableEdepTimeHistoCmd) pActor->SetEdepTimeHistoCalc(  pEnableEdepTimeHistoCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableEdepTrackHistoCmd) pActor->SetEdepTrackHistoCalc(  pEnableEdepTrackHistoCmd->GetNewBoolValue(newValue)  ) ;
+  if(cmd == pEnableElossHistoCmd) pActor->SetElossHistoCalc(  pEnableElossHistoCmd->GetNewBoolValue(newValue)  ) ;
+  
+  if(cmd == pEnableLogBinningCMD) pActor->SetLogBinning(  pEnableLogBinningCMD->GetNewBoolValue(newValue)  ) ;
   GateActorMessenger::SetNewValue(cmd,newValue);
 }
 //-----------------------------------------------------------------------------
