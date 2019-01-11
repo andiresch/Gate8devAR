@@ -140,11 +140,11 @@ void GateEnergySpectrumActor::Construct()
   if (mEnableEnergySpectrumFluenceCosFlag){
       if (!mEnableLogBinning){
           //G4cout<< "Do we enter here?"<<G4endl;
-          pEnergySpectrumFluenceCos = new TH1D("energySpectrum fluence 1/cos","Energy Spectrum fluence 1/cos",GetENBins(),GetEmin() ,GetEmax() );
+          pEnergySpectrumFluenceCos = new TH1D("energySpectrumFluenceCos","Energy Spectrum fluence 1/cos",GetENBins(),GetEmin() ,GetEmax() );
       }
       else {
           //G4cout<< "here is a problem?"<<G4endl;
-          pEnergySpectrumFluenceCos = new TH1D("energySpectrum fluence cos log bin","Energy Spectrum fluence cos log bin",mENBins,eBinV);
+          pEnergySpectrumFluenceCos = new TH1D("energySpectrumFluenceCosLogBin","Energy Spectrum fluence cos log bin",mENBins,eBinV);
           //G4cout<< "managed TH1D init"<<G4endl;
       }
       pEnergySpectrumFluenceCos->SetXTitle("Energy (MeV)");  
@@ -367,10 +367,12 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
     G4ThreeVector momentumDir = step->GetTrack()->GetMomentumDirection(); 
     
     if (mEnableEnergySpectrumFluenceCosFlag){
-        if (momentumDir.z() >= 0){
+        double dz = TMath::Abs( momentumDir.z());
+        if (dz > 0){
             double Emean = (Ei+Ef)/2/MeV;
-            double invAngle = 1/acos(momentumDir.z());
-            if (invAngle > 10) invAngle = 10;
+            //double invAngle = 1/acos(momentumDir.z()); %% this is wrong: correct is: cos( acos(dz) ). cos(acos (x) ) = x
+            double invAngle = 1/dz;
+            //if (invAngle > 10) invAngle = 10;
             pEnergySpectrumFluenceCos->Fill(Emean,step->GetTrack()->GetWeight()*invAngle);
         }
     }
