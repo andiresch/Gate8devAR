@@ -16,6 +16,13 @@
 #include "GateLETActor.hh"
 #include "GateMiscFunctions.hh"
 
+
+// A Resch 28.1.2019
+#include "G4BGGNucleonElasticXS.hh"
+#include "G4ParticleTable.hh"
+#include "G4ParticleDefinition.hh"
+
+
 // g4
 #include <G4EmCalculator.hh>
 #include <G4VoxelLimits.hh>
@@ -68,11 +75,23 @@ void GateLETActor::Construct() {
   GateDebugMessageInc("Actor", 4, "GateLETActor -- Construct - begin\n");
   GateVImageActor::Construct();
 
-  // Find G4_WATER. This it needed here because we will used this
-  // material for dedx computation for LETtoWater.
-  G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
-  
- 
+  //// Find G4_WATER. This it needed here because we will used this
+  //// material for dedx computation for LETtoWater.
+  //G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
+  //G4Material* myWater =  G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER");
+  //// A.Resch 28.1.2019
+  //G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+  //const G4ParticleDefinition* myProton  = particleTable->FindParticle("proton");
+  //const G4ThreeVector & myVector = G4ThreeVector(0.,0.,0.);
+  //G4double myEnergy = 100*MeV;
+  ////G4DynamicParticle (const G4ParticleDefinition *aParticleDefinition, const G4ThreeVector &aMomentumDirection, G4double aKineticEnergy)
+  //const  G4DynamicParticle myDynamicProton  = const G4DynamicParticle(myProton,myVector, myEnergy);
+  ////G4double G4BGGNucleonElasticXS::GetElementCrossSection(const G4DynamicParticle*, G4int Z,
+				  ////const G4Material* mat = 0);
+   //G4double thisXS = G4BGGNucleonElasticXS::GetElementCrossSection(myDynamicProton, 6, myWater);
+   //G4cout << "this worked?" <<G4endl;
+   //G4cout << "XS: " <<thisXS<<G4endl;
+   //G4cout << "did it?" <<G4endl<<G4endl<<G4endl<<G4endl<<G4endl<<G4endl<<G4endl;
 
   // Enable callbacks
   EnableBeginOfRunAction(true);
@@ -271,18 +290,23 @@ void GateLETActor::UserSteppingActionInVoxel(const int index, const G4Step* step
         //G4cout<<energy <<" " << dedx <<G4endl;
    if (mIsVerboseStoppingPower) {
        //G4cout<<"in here"<<G4endl;
-        G4cout<<"dedx pre: " << emcalc->ComputeElectronicDEDX(energy1, partname, material)<<G4endl;
-        G4cout<<"dedx mid: " << emcalc->ComputeElectronicDEDX(energy, partname, material)<<G4endl;
-        G4cout<<"edep/dx : "<<edep/steplength<<G4endl;
-        G4cout<<"Energy pre: "<<energy1/MeV <<G4endl;
-        G4cout<<"Energy mid: "<<energy <<G4endl;
-        G4cout<<"Energy post: "<<energy2<<G4endl;
-        G4cout<<"StepLength: "<<steplength/mm<<G4endl;
-        G4cout<<"E1 - dx*dedx(E1) :" << energy1 - steplength/mm*emcalc->ComputeElectronicDEDX(energy1, partname, material) <<G4endl;
-        G4cout<<"E1 - dx*dedx(Eq) :" << energy1 - steplength/mm*dedx<<G4endl<<G4endl;
-        G4NistManager* man=G4NistManager::Instance();
-        G4Material* Water = man->FindOrBuildMaterial("Water");
-        G4cout<<"mean excitation: "<< Water->GetIonisation()->GetMeanExcitationEnergy()/eV<<G4endl;
+        //G4cout<<"dedx pre: " << emcalc->ComputeElectronicDEDX(energy1, partname, material)<<G4endl;
+        //G4cout<<"dedx mid: " << emcalc->ComputeElectronicDEDX(energy, partname, material)<<G4endl;
+        //G4cout<<"edep/dx : "<<edep/steplength<<G4endl;
+        //G4cout<<"Energy pre: "<<energy1/MeV <<G4endl;
+        //G4cout<<"Energy mid: "<<energy <<G4endl;
+        //G4cout<<"Energy post: "<<energy2<<G4endl;
+        //G4cout<<"StepLength: "<<steplength/mm<<G4endl;
+        //G4cout<<"E1 - dx*dedx(E1) :" << energy1 - steplength/mm*emcalc->ComputeElectronicDEDX(energy1, partname, material) <<G4endl;
+        //G4cout<<"E1 - dx*dedx(Eq) :" << energy1 - steplength/mm*dedx<<G4endl<<G4endl;
+        ////G4NistManager* man=G4NistManager::Instance();
+        ////G4Material* Water = man->FindOrBuildMaterial("Water");
+        ////G4cout<<"mean excitation: "<< Water->GetIonisation()->GetMeanExcitationEnergy()/eV<<G4endl;
+        //G4cout<<energy2<< " "<< emcalc->ComputeElectronicDEDX(energy2, partname, material)<<G4endl;
+        //G4double GetElementCrossSection(const G4DynamicParticle*, G4int Z,
+				  //const G4Material* mat = 0);
+        //G4double GetElementCrossSection(step->GetTrack()->GetDynamicParticle()
+    
    }
 
   if (dedx==0){

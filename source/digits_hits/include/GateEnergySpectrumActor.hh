@@ -127,6 +127,8 @@ protected:
   TH1D * pEnergySpectrumNbPart;
   TH1D * pEnergySpectrumFluenceCos;
   TH1D * pEnergySpectrumFluenceTrack;
+  TH1D * pEnergySpectrumLET;
+  TH1D * pEnergySpectrumLETdoseWeighted;
   
   //TH2D * pEnergySpectrumTrack2D;
   TH1D * pEnergyEdepSpectrum;
@@ -188,8 +190,10 @@ protected:
   bool mEnableEdepTimeHistoFlag;
   bool mEnableEdepTrackHistoFlag;
   bool mEnableElossHistoFlag;
-  
+  bool mEnableEnergySpectrumLETFlag;
+  bool mEnableEnergySpectrumLETdoseWeightedFlag;
   bool mEnableLogBinning;
+  bool mLETtoEBT3Flag;
   
   double pEnergySpectrumFluenceTrackNorm;
   

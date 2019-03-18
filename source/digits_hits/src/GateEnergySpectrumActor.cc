@@ -17,7 +17,7 @@
 #include <G4VoxelLimits.hh>
 #include <G4NistManager.hh>
 #include <G4PhysicalConstants.hh>
-
+#include <math.h>
 
 
 //-----------------------------------------------------------------------------
@@ -56,13 +56,16 @@ GateEnergySpectrumActor::GateEnergySpectrumActor(G4String name, G4int depth):
   pEnergySpectrumFluenceTrackNorm = 0.;
   mSaveAsTextFlag = false;
   mSaveAsDiscreteSpectrumTextFlag = false;
-
+  mLETtoEBT3Flag = false;
   
   mEnableLETSpectrumFlag = true;
   mEnableQSpectrumFlag = true;
   mEnableEnergySpectrumNbPartFlag = false;
   mEnableEnergySpectrumFluenceCosFlag = false;
-  mEnableEnergySpectrumFluenceTrackFlag = false;
+  mEnableEnergySpectrumFluenceTrackFlag = true;
+  
+  mEnableEnergySpectrumLETFlag = false;
+  mEnableEnergySpectrumLETdoseWeightedFlag = false;
   mEnableEnergySpectrumEdepFlag = true;
   
   mEnableEdepHistoFlag = false;
@@ -103,6 +106,11 @@ void GateEnergySpectrumActor::Construct()
   EnablePostUserTrackingAction(true);
   EnableUserSteppingAction(true);
   EnableEndOfEventAction(true); // for save every n
+  
+  if (mLETtoEBT3Flag){
+    G4NistManager::Instance()->FindOrBuildMaterial("EBTactive");
+   }
+  
   if (mEnableLogBinning){
      //G4cout<< "Before Loop: Emin: "<< mEmin<<G4endl;
      //G4cout<< "Before Loop: Emmax: "<< mEmax<<G4endl;
@@ -154,6 +162,17 @@ void GateEnergySpectrumActor::Construct()
       pEnergySpectrumFluenceTrack = new TH1D("energySpectrumFluenceTrack","Energy Spectrum fluence Track",GetENBins(),GetEmin() ,GetEmax() );
       pEnergySpectrumFluenceTrack->SetXTitle("Energy (MeV)");
   } 
+
+  
+  if (mEnableEnergySpectrumLETdoseWeightedFlag){
+      pEnergySpectrumLETdoseWeighted = new TH1D("energySpectrumLETdose","Energy Spectrum LET times energy deposit",GetENBins(),GetEmin() ,GetEmax() );
+      pEnergySpectrumLETdoseWeighted->SetXTitle("LETd (MeV*MeV/mm)");
+  } 
+  if (mEnableEnergySpectrumLETFlag){
+      pEnergySpectrumLET = new TH1D("energySpectrumLET","Energy Spectrum LET ",GetENBins(),GetEmin() ,GetEmax() );
+      pEnergySpectrumLET->SetXTitle("LET (MeV/mm)");
+  } 
+  
   
   if (mEnableEnergySpectrumEdepFlag){
       pEnergyEdepSpectrum = new TH1D("energyEdepSpectrum","Energy Edep Spectrum",GetENBins(),GetEmin() ,GetEmax() );
@@ -236,7 +255,13 @@ void GateEnergySpectrumActor::ResetData()
   if (mEnableEnergySpectrumEdepFlag){
       pEnergyEdepSpectrum->Reset();
   }
-  
+   
+  if (mEnableEnergySpectrumLETdoseWeightedFlag){
+      pEnergySpectrumLETdoseWeighted->Reset();
+  }
+  if (mEnableEnergySpectrumLETFlag){
+      pEnergySpectrumLET->Reset();
+  }  
   if (mEnableLETSpectrumFlag) {
       pLETSpectrum->Reset();
   }
@@ -337,7 +362,7 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
   else if(step->GetTotalEnergyDeposit()>0.00001) sumM2+=step->GetTotalEnergyDeposit();
   else sumM3+=step->GetTotalEnergyDeposit();
 
-  edep += step->GetTotalEnergyDeposit();
+  edep = step->GetTotalEnergyDeposit();
   edepTrack += step->GetTotalEnergyDeposit();
 
   //cout << "--- " << step->GetTrack()->GetTrackID() << " " << step->GetTrack()->GetParentID() << endl;
@@ -355,25 +380,44 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
     ltof /= 2;
     //cout << "****************** diff tof=" << ltof << " edep=" << edep << endl;
   }
-
+  Ei=step->GetPreStepPoint()->GetKineticEnergy();
   Ef=step->GetPostStepPoint()->GetKineticEnergy();
   if(newTrack){
-    Ei=step->GetPreStepPoint()->GetKineticEnergy();
+    
      
     if (mEnableEnergySpectrumNbPartFlag){
-        pEnergySpectrumNbPart->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight());
+        pEnergySpectrumNbPart->Fill(Ei/MeV,step->GetTrack()->GetWeight());
     }
     
     G4ThreeVector momentumDir = step->GetTrack()->GetMomentumDirection(); 
     
     if (mEnableEnergySpectrumFluenceCosFlag){
         double dz = TMath::Abs( momentumDir.z());
+        //G4Material* materialH = step->GetPreStepPoint()->GetMaterial();//->GetName(); 
+        //G4ParticleDefinition* partnameH = step->GetTrack()->GetDefinition();//->GetParticleName();
+        //double rangeCSDA = emcalc->GetCSDARange(Ei, partnameH->GetParticleName(), materialH->GetName(), "world");
+          const double alphaB = 2.2e-3;
+          const double  pB = 1.77;
+
+        double lengthOfDetector = 0.1;
+        double rangeCSDA = alphaB * pow(Ei,pB)/lengthOfDetector;
+        ////4double 	GetCSDARange (G4double kinEnergy, const G4ParticleDefinition *, const G4Material *, const G4Region *r=0)
+        ////G4double 	GetCSDARange (G4double kinEnergy, const G4String &part, const G4String &mat, const G4String &s="world")
+        ////G4double 	GetRange (G4double kinEnergy, const G4ParticleDefinition *, const G4Material *, const G4Region *r=0)
         if (dz > 0){
-            double Emean = (Ei+Ef)/2/MeV;
+            //double Emean = (Ei+Ef)/2/MeV;
             //double invAngle = 1/acos(momentumDir.z()); %% this is wrong: correct is: cos( acos(dz) ). cos(acos (x) ) = x
             double invAngle = 1/dz;
+            //G4cout << "E = " << Ei << G4endl;
+            //G4cout << "CSDA = " << rangeCSDA<<G4endl;
+            if (invAngle > rangeCSDA) {
+                //G4cout << "cos > range"<< G4endl;
+                //G4cout << "cosApp =" << invAngle<<G4endl;
+                invAngle = rangeCSDA; 
+            }
+            //G4cout << " " <<G4endl;
             //if (invAngle > 10) invAngle = 10;
-            pEnergySpectrumFluenceCos->Fill(Emean,step->GetTrack()->GetWeight()*invAngle);
+            pEnergySpectrumFluenceCos->Fill(Ei,step->GetTrack()->GetWeight()*invAngle);
         }
     }
     // uncommented A.Resch 30.Nov 2018
@@ -385,22 +429,44 @@ void GateEnergySpectrumActor::UserSteppingAction(const GateVVolume *, const G4St
   
    if (mEnableEnergySpectrumFluenceTrackFlag){
        G4double stepLength = step->GetStepLength();
-       pEnergySpectrumFluenceTrack->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*stepLength);
+       pEnergySpectrumFluenceTrack->Fill(Ei/MeV,step->GetTrack()->GetWeight()*stepLength);
        pEnergySpectrumFluenceTrackNorm+= stepLength;
    }
    if (mEnableEnergySpectrumEdepFlag){
-       pEnergyEdepSpectrum->Fill((Ei+Ef)/2/MeV,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
+       pEnergyEdepSpectrum->Fill(Ei/MeV,step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
    }
-   
-  if(mEnableLETSpectrumFlag) {
+  if(mEnableLETSpectrumFlag || mEnableEnergySpectrumLETdoseWeightedFlag || mEnableEnergySpectrumLETFlag) {
       //G4double density = step->GetPreStepPoint()->GetMaterial()->GetDensity();
-      G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName();
+      G4Material* material = step->GetPreStepPoint()->GetMaterial();//->GetName(); 
       G4double energy1 = step->GetPreStepPoint()->GetKineticEnergy();
       G4double energy2 = step->GetPostStepPoint()->GetKineticEnergy();
       G4double energy=(energy1+energy2)/2;
       G4ParticleDefinition* partname = step->GetTrack()->GetDefinition();//->GetParticleName();
-      G4double dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
-      pLETSpectrum->Fill(dedx/(keV/um),step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV);
+      G4double dedx;
+      G4double edepH = step->GetTrack()->GetWeight()*step->GetTotalEnergyDeposit()/MeV;
+      if (mLETtoEBT3Flag){
+        dedx = emcalc->ComputeElectronicDEDX(energy, partname->GetParticleName(), "EBTactive" );
+        G4double dedxWater = emcalc->ComputeElectronicDEDX(energy, partname, material);
+        if (dedxWater > 0){
+            edepH *= dedx/ dedxWater;
+            }
+        }
+      else {
+           dedx = emcalc->ComputeElectronicDEDX(energy, partname, material);
+       } 
+          //weightedLET = (weightedLET/dedx)*	emcalc->ComputeTotalDEDX(energy, partname->GetParticleName(), "G4_WATER") ;
+      if (mEnableLETSpectrumFlag) {
+         pLETSpectrum->Fill(dedx/(keV/um), edepH/MeV);
+      }
+      if (mEnableEnergySpectrumLETdoseWeightedFlag){
+          //G4double edep = step->GetTotalEnergyDeposit();
+         pEnergySpectrumLETdoseWeighted->Fill(energy/MeV,step->GetTrack()->GetWeight()*dedx*edep);
+      }
+      
+      if (mEnableEnergySpectrumLETFlag){
+          //G4double edep = step->GetTotalEnergyDeposit();
+         pEnergySpectrumLET->Fill(energy/MeV,step->GetTrack()->GetWeight()*dedx);
+      }
   }  
   
   if(mEnableQSpectrumFlag) {
